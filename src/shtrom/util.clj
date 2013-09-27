@@ -4,8 +4,11 @@
   (:import [java.nio ByteBuffer ByteOrder]
            [java.io DataInputStream DataOutputStream FileInputStream FileOutputStream IOException EOFException]))
 
-(defn- ^ByteBuffer gen-byte-buffer []
-  (.order (ByteBuffer/allocate 8) ByteOrder/BIG_ENDIAN))
+(defn- ^ByteBuffer gen-byte-buffer
+  ([]
+     (gen-byte-buffer 8))
+  ([size]
+     (.order (ByteBuffer/allocate size) ByteOrder/BIG_ENDIAN)))
 
 ;; reader
 
@@ -68,6 +71,13 @@
 
 (defn bist-write
   [])
+
+(defn data->byte-array
+  [data]
+  (let [bb (gen-byte-buffer (* 4 (count data)))]
+    (doseq [d data]
+      (.putInt bb d))
+    (.array bb)))
 
 ;; convert utility
 

@@ -1,5 +1,6 @@
 (ns shtrom.core
-  (:require [shtrom.util :refer [bist-read]]))
+  (:require [ring.util.response :as response]
+            [shtrom.util :refer [bist-read data->byte-array]]))
 
 (declare data-dir)
 
@@ -16,8 +17,11 @@
   [key ref binsize start end]
   (let [left (int (quot start binsize))
         right (inc (quot end binsize))
-        path (hist-path key ref binsize)]
-    (pr-str (bist-read path left right))))
+        path (hist-path key ref binsize)
+        data (bist-read path left right)]
+    (-> (response/response (new java.io.ByteArrayInputStream (data->byte-array data)))
+        (response/content-type (:content-type "application/octet-stream"))
+        (response/header "Content-Length" (* 4 (count data))))))
 
 (defn write-hist
   [key ref binsize]
