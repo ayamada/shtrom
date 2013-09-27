@@ -1,10 +1,10 @@
-(ns shtrom.core
+(ns shtrom.core.request
   (:require [ring.util.response :as response]
-            [shtrom.util :refer [prepare-file bist-read bist-write data->byte-array byte-array->data http-body->bytes]]))
+            [shtrom.core.util :refer [prepare-file bist-read bist-write data->byte-array byte-array->data http-body->bytes]]))
 
 (declare data-dir)
 
-(defn init
+(defn init-request
   []
   (let [config (read-string (slurp "config/shtrom.config.clj"))]
     (def data-dir (:data-dir config))))

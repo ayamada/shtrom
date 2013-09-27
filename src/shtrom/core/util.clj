@@ -1,4 +1,4 @@
-(ns shtrom.util
+(ns shtrom.core.util
   (require [clojure.java.io :as io]
            [clojure.string :as str])
   (:import [java.nio ByteBuffer ByteOrder]
