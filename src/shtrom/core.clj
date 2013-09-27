@@ -1,4 +1,5 @@
-(ns shtrom.core)
+(ns shtrom.core
+  (:require [shtrom.util :refer [bist-read]]))
 
 (declare data-dir)
 
@@ -13,10 +14,10 @@
 
 (defn read-hist
   [key ref binsize start end]
-  (let [left (quot start binsize)
+  (let [left (int (quot start binsize))
         right (inc (quot end binsize))
         path (hist-path key ref binsize)]
-    ))
+    (pr-str (bist-read path left right))))
 
 (defn write-hist
   [key ref binsize]
