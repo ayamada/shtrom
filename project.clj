@@ -7,4 +7,5 @@
                  [compojure "1.1.5"]]
   :plugins [[lein-ring "0.8.5"]]
   :ring {:handler shtrom.handler/app
-         :init shtrom.handler/init})
+         :init shtrom.handler/init
+         :port 3001})
