@@ -1,6 +1,6 @@
 (ns shtrom.core
   (:require [ring.util.response :as response]
-            [shtrom.util :refer [bist-read data->byte-array]]))
+            [shtrom.util :refer [prepare-file bist-read bist-write data->byte-array byte-array->data http-body->bytes]]))
 
 (declare data-dir)
 
@@ -15,14 +15,23 @@
 
 (defn read-hist
   [key ref binsize start end]
-  (let [left (int (quot start binsize))
-        right (inc (quot end binsize))
-        path (hist-path key ref binsize)
-        data (bist-read path left right)]
-    (-> (response/response (new java.io.ByteArrayInputStream (data->byte-array data)))
-        (response/content-type (:content-type "application/octet-stream"))
-        (response/header "Content-Length" (* 4 (count data))))))
+  (try
+    (let [left (int (quot start binsize))
+          right (inc (quot end binsize))
+          path (hist-path key ref binsize)
+          data (bist-read path left right)]
+      (-> (response/response (new java.io.ByteArrayInputStream (data->byte-array data)))
+          (response/content-type (:content-type "application/octet-stream"))
+          (response/header "Content-Length" (* 4 (count data)))))
+    (catch java.io.FileNotFoundException e nil)
+    (catch java.io.EOFException e nil)))
 
 (defn write-hist
-  [key ref binsize]
-  "done")
+  [key ref binsize req]
+  (let [len (:content-length req)
+        body (http-body->bytes (:body req) len)
+        values (byte-array->data body len)
+        path (hist-path key ref binsize)]
+    (prepare-file path)
+    (bist-write path values)
+    "OK"))

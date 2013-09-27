@@ -12,8 +12,15 @@
 (defroutes app-routes
   (context "/:key/:ref/:binsize" [key ref binsize]
            (defroutes hist-routes
-             (GET  "/" [start end] (core/read-hist key ref (str->int binsize) (str->int start) (str->int end)))
-             (POST "/" req (core/write-hist key ref binsize))))
+             (GET  "/" [start end] (core/read-hist key
+                                                   ref
+                                                   (str->int binsize)
+                                                   (str->int start)
+                                                   (str->int end)))
+             (POST "/" req (core/write-hist key
+                                            ref
+                                            binsize
+                                            req))))
   (route/not-found "Not Found"))
 
 (def app

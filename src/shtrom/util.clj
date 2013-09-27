@@ -70,7 +70,9 @@
                 (range start end)))))
 
 (defn bist-write
-  [])
+  [^String f values]
+  (with-open [wtr (bwriter f)]
+    (doseq [v values] (bwrite-integer wtr v))))
 
 (defn data->byte-array
   [data]
@@ -78,6 +80,31 @@
     (doseq [d data]
       (.putInt bb d))
     (.array bb)))
+
+(defn byte-array->data
+  [bytes len]
+  (let [bb (doto (gen-byte-buffer len)
+             (.put bytes 0 len)
+             (.position 0))
+        data-len (quot len 4)]
+    (map (fn [_] (.getInt bb))
+         (range data-len))))
+
+(defn prepare-file
+  [path]
+  (let [f (io/file path)]
+    (when-not (.exists f)
+      (let [dir-path (.getParent f)
+            dir-f (io/file dir-path)]
+        (.mkdirs dir-f)))))
+
+;; http
+
+(defn http-body->bytes
+  [input len]
+  (let [bytes (byte-array len)]
+    (.read input bytes 0 len)
+    bytes))
 
 ;; convert utility
 
