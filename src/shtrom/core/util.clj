@@ -12,6 +12,10 @@
 
 ;; reader
 
+(defn- file-size
+  [^String path]
+  (.length (io/file path)))
+
 (defn- breader
   [^String path]
   (DataInputStream. (FileInputStream. (io/file path))))
@@ -63,11 +67,16 @@
 ;; public
 
 (defn bist-read
-  [^String f ^Integer start ^Integer end]
-  (with-open [rdr (breader f)]
-    (skip rdr (* start 4))
-    (doall (map (fn [_] (bread-integer rdr))
-                (range start end)))))
+  ([^String f]
+     (let [len (quot (file-size f) 4)]
+       (with-open [rdr (breader f)]
+         (doall (map (fn [_] (bread-integer rdr))
+                     (range 0 len))))))
+  ([^String f ^Integer start ^Integer end]
+      (with-open [rdr (breader f)]
+        (skip rdr (* start 4))
+        (doall (map (fn [_] (bread-integer rdr))
+                    (range start end))))))
 
 (defn bist-write
   [^String f values]
@@ -132,3 +141,7 @@
     (doseq [f (file-seq dir)]
       (when (= ".hist" (re-find #"\.[0-9a-z]+$" (.getName f)))
         (hist->bist f)))))
+
+(defn reduce-values
+  [values]
+  (map (fn [v] (apply + v)) (partition-all 2 values)))

@@ -1,6 +1,8 @@
 (ns shtrom.core.request
   (:require [ring.util.response :as response]
-            [shtrom.core.util :refer [prepare-file bist-read bist-write data->byte-array byte-array->data http-body->bytes]]))
+            [shtrom.core.util :refer [prepare-file bist-read bist-write
+                                      data->byte-array byte-array->data http-body->bytes
+                                      reduce-values]]))
 
 (declare data-dir)
 
@@ -35,3 +37,16 @@
     (prepare-file path)
     (bist-write path values)
     "OK"))
+
+(defn reduce-hist
+  [key ref binsize]
+  (try
+    (let [path (hist-path key ref binsize)
+          values (bist-read path)
+          new-values (reduce-values values)
+          new-path (hist-path key ref (* binsize 2))]
+      (prepare-file new-path)
+      (bist-write new-path new-values)
+      "OK")
+    (catch java.io.FileNotFoundException e nil)
+    (catch java.io.EOFException e nil)))

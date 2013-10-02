@@ -2,7 +2,7 @@
   (:use compojure.core)
   (:require [compojure.handler :as handler]
             [compojure.route :as route]
-            [shtrom.core.request :refer [read-hist write-hist init-request]]))
+            [shtrom.core.request :refer [read-hist write-hist reduce-hist init-request]]))
 
 (defn- str->int [str]
   (try
@@ -20,7 +20,10 @@
              (POST "/" req (write-hist key
                                        ref
                                        (str->int binsize)
-                                       req))))
+                                       req))
+             (POST "/reduction" req (reduce-hist key
+                                                 ref
+                                                 (str->int binsize)))))
   (route/not-found "Not Found"))
 
 (def app
