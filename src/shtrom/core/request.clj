@@ -26,10 +26,10 @@
           (response/content-type (:content-type "application/octet-stream"))
           (response/header "Content-Length" (* 4 (count data)))))
     (catch java.io.FileNotFoundException e (do
-                                             (println (format "read-hist: file not found: " key ref binsize start end))
+                                             (println (format "read-hist: file not found: %s %s %d %d %d" key ref binsize start end))
                                              nil))
     (catch java.io.EOFException e (do
-                                    (println (format "read-hist: eof: " key ref binsize start end))
+                                    (println (format "read-hist: eof: %s %s %d %d %d" key ref binsize start end))
                                     nil))))
 
 (defn write-hist
