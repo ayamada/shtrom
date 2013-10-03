@@ -25,8 +25,12 @@
       (-> (response/response (new java.io.ByteArrayInputStream (data->byte-array data)))
           (response/content-type (:content-type "application/octet-stream"))
           (response/header "Content-Length" (* 4 (count data)))))
-    (catch java.io.FileNotFoundException e nil)
-    (catch java.io.EOFException e nil)))
+    (catch java.io.FileNotFoundException e (do
+                                             (println (format "read-hist: file not found: " key ref binsize start end))
+                                             nil))
+    (catch java.io.EOFException e (do
+                                    (println (format "read-hist: eof: " key ref binsize start end))
+                                    nil))))
 
 (defn write-hist
   [key ref binsize req]
@@ -48,5 +52,9 @@
       (prepare-file new-path)
       (bist-write new-path new-values)
       "OK")
-    (catch java.io.FileNotFoundException e nil)
-    (catch java.io.EOFException e nil)))
+    (catch java.io.FileNotFoundException e (do
+                                             (println (format "reduce-hist: file not found: %s %s %d" key ref binsize))
+                                             nil))
+    (catch java.io.EOFException e (do
+                                    (println (format "reduce-hist: eof: %s %s %d" key ref binsize))
+                                    nil))))
