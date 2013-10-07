@@ -111,9 +111,15 @@
 
 (defn http-body->bytes
   [input len]
-  (let [bytes (byte-array len)]
-    (.read input bytes 0 len)
-    bytes))
+  (let [bb (gen-byte-buffer len)
+        data-size 4096
+        data (byte-array 4096)]
+    (loop [l (.read input data 0 data-size)]
+      (if (neg? l)
+        (.array bb)
+        (do
+          (.put bb data 0 l)
+          (recur (.read input data 0 data-size)))))))
 
 ;; convert utility
 
