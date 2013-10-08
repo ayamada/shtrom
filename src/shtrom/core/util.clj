@@ -10,6 +10,13 @@
   ([size]
      (.order (ByteBuffer/allocate size) ByteOrder/BIG_ENDIAN)))
 
+(defn- validate-index
+  [i len]
+  (cond
+   (< i 0)  0
+   (> i len) len
+   :else i))
+
 ;; reader
 
 (defn- file-size
@@ -70,24 +77,41 @@
   ([^String f]
      (let [len (quot (file-size f) 4)]
        (with-open [rdr (breader f)]
-         (doall (map (fn [_] (bread-integer rdr))
-                     (range 0 len))))))
+         [0
+          len
+          (doall (map (fn [i]
+                        (bread-integer rdr))
+                      (range 0 len)))])))
   ([^String f ^Integer start ^Integer end]
-      (with-open [rdr (breader f)]
-        (skip rdr (* start 4))
-        (doall (map (fn [_] (bread-integer rdr))
-                    (range start end))))))
+     (let [len (quot (file-size f) 4)
+           left (validate-index start len)
+           right (validate-index end len)]
+       (if (< left right)
+         (with-open [rdr (breader f)]
+           (skip rdr (* left 4))
+           [left
+            right
+            (doall (map (fn [i]
+                          (bread-integer rdr))
+                        (range left right)))])
+         [0 0 (list)]))))
 
 (defn bist-write
   [^String f values]
   (with-open [wtr (bwriter f)]
     (doseq [v values] (bwrite-integer wtr v))))
 
-(defn data->byte-array
-  [data]
-  (let [bb (gen-byte-buffer (* 4 (count data)))]
-    (doseq [d data]
-      (.putInt bb d))
+(defn values->content-length
+  [values]
+  (+ 16 (* 4 (count values))))
+
+(defn values->content
+  [start end values]
+  (let [bb (gen-byte-buffer (values->content-length values))]
+    (.putLong bb start)
+    (.putLong bb end)
+    (doseq [v values]
+      (.putInt bb v))
     (.array bb)))
 
 (defn byte-array->data
