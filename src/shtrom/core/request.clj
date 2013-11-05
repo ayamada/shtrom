@@ -1,5 +1,6 @@
 (ns shtrom.core.request
-  (:require [ring.util.response :as response]
+  (:require [clojure.java.io :as io]
+            [ring.util.response :as response]
             [shtrom.core.util :refer [prepare-file bist-read bist-write
                                       values->content values->content-length
                                       byte-array->data http-body->bytes
@@ -7,10 +8,17 @@
 
 (declare data-dir)
 
+(def ^:private default-config-filename "shtrom.config.clj")
+
 (defn init-request
-  []
-  (let [config (read-string (slurp "config/shtrom.config.clj"))]
-    (def data-dir (:data-dir config))))
+  ([]
+     (init-request default-config-filename))
+  ([f]
+      (let [rsrc (io/resource f)
+            conf (if (nil? rsrc)
+                   (throw (RuntimeException. (str "Configuration file not found: " f)))
+                   (read-string (slurp rsrc)))]
+        (def data-dir (:data-dir conf)))))
 
 (defn hist-path
   [key ref bin-size]
