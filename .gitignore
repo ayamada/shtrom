@@ -14,4 +14,4 @@ pom.xml
 .lein-repl-history
 .nrepl-port
 
-/config/*.clj
+/resources/*.clj
