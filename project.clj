@@ -10,4 +10,6 @@
   :plugins [[lein-ring "0.8.5"]]
   :ring {:handler shtrom.core.handler/app
          :init shtrom.core.handler/init
-         :port 3001})
+         :port 3001
+         :war-exclusions [#".+?\.config\.clj"]}
+  :jar-exclusions [#".+?\.config\.clj"])
