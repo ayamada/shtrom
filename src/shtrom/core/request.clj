@@ -32,17 +32,18 @@
           right (inc (quot end bin-size))
           path (hist-path key ref bin-size)
           [l r values] (bist-read path left right)]
+      ;(logging/info path left right l r values)
       (-> (response/response (new java.io.ByteArrayInputStream
                                   (values->content (* l bin-size)
                                                    (* r bin-size)
                                                    values)))
-          (response/content-type (:content-type "application/octet-stream"))
-          (response/header "Content-Length" (values->content-length values))))
+          (response/header "Content-Length" (values->content-length values))
+          (response/header "Content-Type" "application/octet-stream")))
     (catch java.io.FileNotFoundException e (do
-                                             (logging/error (format "read-hist: file not found: %s %s %d %d %d" key ref bin-size start end))
+                                             (logging/warn (format "read-hist: file not found: %s %s %d %d %d" key ref bin-size start end))
                                              nil))
     (catch java.io.EOFException e (do
-                                    (logging/error (format "read-hist: eof: %s %s %d %d %d" key ref bin-size start end))
+                                    (logging/warn (format "read-hist: eof: %s %s %d %d %d" key ref bin-size start end))
                                     nil))))
 
 (defn write-hist
@@ -66,8 +67,8 @@
       (bist-write new-path new-values)
       "OK")
     (catch java.io.FileNotFoundException e (do
-                                             (logging/error (format "reduce-hist: file not found: %s %s %d" key ref bin-size))
+                                             (logging/warn (format "reduce-hist: file not found: %s %s %d" key ref bin-size))
                                              nil))
     (catch java.io.EOFException e (do
-                                    (logging/error (format "reduce-hist: eof: %s %s %d" key ref bin-size))
+                                    (logging/warn (format "reduce-hist: eof: %s %s %d" key ref bin-size))
                                     nil))))

@@ -21,7 +21,10 @@
 
 (defn- file-size
   [^String path]
-  (.length (io/file path)))
+  (let [f (io/file path)]
+    (when-not (.exists f)
+      (throw (java.io.FileNotFoundException.)))
+    (.length f)))
 
 (defn- breader
   [^String path]

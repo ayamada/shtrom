@@ -2,6 +2,7 @@
   (:use compojure.core)
   (:require [compojure.handler :as handler]
             [compojure.route :as route]
+            [ring.util.response :as response]
             [shtrom.core.request :refer [read-hist write-hist reduce-hist init-request]]))
 
 (defn- str->int [str]
@@ -24,7 +25,8 @@
              (POST "/reduction" req (reduce-hist key
                                                  ref
                                                  (str->int binsize)))))
-  (route/not-found "Not Found"))
+  (route/not-found (-> (response/response "")
+                       (response/header "Content-Type" "application/octet-stream"))))
 
 (def app
   (handler/site app-routes))
