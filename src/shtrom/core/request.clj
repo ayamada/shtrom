@@ -11,6 +11,20 @@
 
 (def ^:private default-config-filename "shtrom.config.clj")
 
+;; response
+
+(defn- success
+  [msg]
+  (-> (response/response msg)
+      (response/status 200)))
+
+(defn- abort-bad-request
+  [msg]
+  (-> (response/response msg)
+      (response/status 400)))
+
+;; util
+
 (defn init-request
   ([]
      (init-request default-config-filename))
@@ -25,6 +39,8 @@
   [key ref bin-size]
   (format "%s/%s/%s-%s.bist" data-dir key ref bin-size))
 
+;; handle
+
 (defn read-hist
   [key ref bin-size start end]
   (try
@@ -32,7 +48,6 @@
           right (inc (quot end bin-size))
           path (hist-path key ref bin-size)
           [l r values] (bist-read path left right)]
-      ;(logging/info path left right l r values)
       (-> (response/response (new java.io.ByteArrayInputStream
                                   (values->content (* l bin-size)
                                                    (* r bin-size)
@@ -48,13 +63,21 @@
 
 (defn write-hist
   [key ref bin-size req]
-  (let [len (:content-length req)
-        body (http-body->bytes (:body req) len)
+  (let [len (if (nil? (:content-length req))
+              0
+              (:content-length req))
+        body (if (nil? (:body req))
+               (byte-array 0)
+               (http-body->bytes (:body req) len))
         values (byte-array->data body len)
         path (hist-path key ref bin-size)]
     (prepare-file path)
-    (bist-write path values)
-    "OK"))
+    (if (pos? (count values))
+      (do
+        (bist-write path values)
+        (success "OK"))
+      (do (logging/warn (format "write-hist: bad request: %s %s %d" key ref bin-size))
+          (abort-bad-request "Request values are empty")))))
 
 (defn reduce-hist
   [key ref bin-size]
@@ -65,7 +88,7 @@
           new-path (hist-path key ref (* bin-size 2))]
       (prepare-file new-path)
       (bist-write new-path new-values)
-      "OK")
+      (success "OK"))
     (catch java.io.FileNotFoundException e (do
                                              (logging/warn (format "reduce-hist: file not found: %s %s %d" key ref bin-size))
                                              nil))
