@@ -68,7 +68,7 @@
 (with-state-changes [(before :facts (do
                                       (prepare)
                                       (init-request "test.shtrom.config.clj")))
-]
+                     (after :facts (clean-up))]
   (fact "reduce histogram"
         (app (-> (request :post (format "/%s/%s/%d/reduction" test1-key test-ref test-bin-size))))
         => (just {:body "OK"
