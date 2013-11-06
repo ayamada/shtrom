@@ -1,23 +1,11 @@
 (ns shtrom.core.t-app
-  (:use [midje.sweet])
+  (:use [midje.sweet]
+        [shtrom.core.t-data]
+        [shtrom.core.t-common])
   (:require [clojure.java.io :as io]
             [ring.mock.request :refer [request query-string body]]
             (shtrom.core [handler :refer [app]]
-                         [request :refer [init-request]]))
-  (:import [java.nio ByteBuffer ByteOrder]))
-
-(def ^:private test-dir "/tmp")
-
-(def ^:private test1-key "1")
-(def ^:private test2-key "2")
-(def ^:private test-ref "test")
-(def ^:private test-bin-size 64)
-
-(def test-hist-length 4)
-(def test-hist-body '(0 256 (51406115 305419793 2311186 304231527)))
-(def test-content-length (+ 16 (* test-hist-length 4)))
-
-(def test-resource-path "test/resources/test-64.bist")
+                         [request :refer [init-request]])))
 
 (defn- prepare
   []
@@ -34,45 +22,10 @@
         test1-data-dir (str test-dir "/" test1-key)
         test2-data-dir (str test-dir "/" test2-key)]
     (delete-if-exist (str test1-data-dir "/" "test-64.bist"))
+    (delete-if-exist (str test1-data-dir "/" "test-128.bist"))
     (delete-if-exist test1-data-dir)
     (delete-if-exist (str test2-data-dir "/" "test-64.bist"))
     (delete-if-exist test2-data-dir)))
-
-(defn- ^ByteBuffer gen-byte-buffer
-  ([]
-     (gen-byte-buffer 8))
-  ([size]
-     (.order (ByteBuffer/allocate size) ByteOrder/BIG_ENDIAN)))
-
-(defn- stream->values
-  [s len]
-  (let [bytes (byte-array len)
-        l (.read s bytes 0 len)
-        bb (doto (gen-byte-buffer len)
-             (.limit len)
-             (.put bytes 0 len)
-             (.position 0))
-        left (.getLong bb)
-        right (.getLong bb)
-        values (map (fn [_] (.getInt bb))
-                    (range (quot (- len 16) 4)))]
-    [left right values]))
-
-(defn- values->bytes
-  [values]
-  (let [len (* 4 (count values))
-        bb (doto (gen-byte-buffer len)
-             (.limit len))]
-    (doseq [v values]
-      (.putInt bb v))
-    (.position bb 0)
-    (.array bb)))
-
-(defn- parse-body
-  [res]
-  (let [[left right values] (stream->values (:body res) test-content-length)]
-    (assoc res :body (list left right values))))
-
 
 (with-state-changes [(before :facts (do
                                       (prepare)
@@ -83,8 +36,8 @@
          (app (-> (request :get (format "/%s/%s/%d" test1-key test-ref test-bin-size))
                   (query-string {:start 0
                                  :end 256}))))
-        => (just {:body test-data-body
-                  :headers {"Content-Length" (str test-data-length), "Content-Type" "application/octet-stream"}
+        => (just {:body test-hist-body
+                  :headers {"Content-Length" (str test-content-length), "Content-Type" "application/octet-stream"}
                   :status 200})
         (app (-> (request :get (format "/%s/%s/%d" "not" "found" test-bin-size))
                  (query-string {:start 0
@@ -100,7 +53,7 @@
                   :headers {}
                   :status 400})
         (app (-> (request :post (format "/%s/%s/%d" test2-key test-ref test-bin-size))
-                 (body (values->bytes (nth test-data-body 2)))))
+                 (body (values->bytes (nth test-hist-body 2)))))
         => (just {:body "OK"
                   :headers {}
                   :status 200})
@@ -108,6 +61,23 @@
          (app (-> (request :get (format "/%s/%s/%d" test2-key test-ref test-bin-size))
                   (query-string {:start 0
                                  :end 256}))))
-        => (just {:body test-data-body
-                  :headers {"Content-Length" (str test-data-length), "Content-Type" "application/octet-stream"}
+        => (just {:body test-hist-body
+                  :headers {"Content-Length" (str test-content-length), "Content-Type" "application/octet-stream"}
+                  :status 200})))
+
+(with-state-changes [(before :facts (do
+                                      (prepare)
+                                      (init-request "test.shtrom.config.clj")))
+]
+  (fact "reduce histogram"
+        (app (-> (request :post (format "/%s/%s/%d/reduction" test1-key test-ref test-bin-size))))
+        => (just {:body "OK"
+                  :headers {}
+                  :status 200})
+        (parse-body
+         (app (-> (request :get (format "/%s/%s/%d" test1-key test-ref (* 2 test-bin-size)))
+                  (query-string {:start 0
+                                 :end 256}))))
+        => (just {:body test-reduce-hist-body
+                  :headers {"Content-Length" (str test-reduce-content-length), "Content-Type" "application/octet-stream"}
                   :status 200})))
