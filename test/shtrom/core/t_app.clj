@@ -34,7 +34,6 @@
         right (.getLong bb)
         values (map (fn [_] (.getInt bb))
                     (range (quot (- len 16) 4)))]
-    (println left right values)
     [left right values]))
 
 (defn- parse-body
