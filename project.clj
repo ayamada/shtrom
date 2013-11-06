@@ -6,6 +6,7 @@
   :repositories [["snapshots" {:url "https://nexus.xcoo.jp/content/repositories/snapshots"}]
                  ["releases" {:url "https://nexus.xcoo.jp/content/repositories/releases"}]]
   :dependencies [[org.clojure/clojure "1.5.1"]
+                 [org.clojure/tools.logging "0.2.6"]
                  [compojure "1.1.5"]]
   :plugins [[lein-ring "0.8.5"]]
   :ring {:handler shtrom.core.handler/app
