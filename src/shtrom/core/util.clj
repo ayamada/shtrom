@@ -19,7 +19,7 @@
 
 ;; reader
 
-(defn- file-size
+(defn file-size
   [^String path]
   (let [f (io/file path)]
     (when-not (.exists f)

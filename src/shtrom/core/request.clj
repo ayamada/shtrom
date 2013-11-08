@@ -5,7 +5,8 @@
             [shtrom.core.util :refer [prepare-file bist-read bist-write
                                       values->content values->content-length
                                       byte-array->data http-body->bytes
-                                      reduce-values]]))
+                                      reduce-values
+                                      file-size]]))
 
 (declare data-dir)
 
@@ -39,10 +40,32 @@
   [key ref bin-size]
   (format "%s/%s/%s-%s.bist" data-dir key ref bin-size))
 
+(defn wait-for-availability
+  ([f & {:keys [size count]
+         :or {size -1
+            count 3}}]
+     (let [check-fn (if (neg? size)
+                      (fn []
+                        (try
+                          (pos? (file-size f))
+                          (catch Exception e false)))
+                      (fn []
+                        (try
+                          (= size (file-size f))
+                          (catch Exception e false))))]
+        (loop [available (check-fn)
+               c 0]
+          (when (and (not available)
+                     (< c count))
+            (logging/info (format "wait %s" f))
+            (Thread/sleep 1000)
+            (recur (check-fn) (inc c)))))))
+
 ;; handle
 
 (defn read-hist
   [key ref bin-size start end]
+  (wait-for-availability (hist-path key ref bin-size))
   (try
     (let [left (int (quot start bin-size))
           right (inc (quot end bin-size))
@@ -81,13 +104,17 @@
 
 (defn reduce-hist
   [key ref bin-size]
+  (logging/info key ref bin-size)
+  (wait-for-availability (hist-path key ref bin-size))
   (try
     (let [path (hist-path key ref bin-size)
           [_ _ values] (bist-read path)
           new-values (reduce-values values)
-          new-path (hist-path key ref (* bin-size 2))]
+          new-path (hist-path key ref (* bin-size 2))
+          new-size (* 4 (count new-values))]
       (prepare-file new-path)
       (bist-write new-path new-values)
+      (wait-for-availability new-path :size new-size)
       (success "OK"))
     (catch java.io.FileNotFoundException e (do
                                              (logging/warn (format "reduce-hist: file not found: %s %s %d" key ref bin-size))
