@@ -57,7 +57,6 @@
                c 0]
           (when (and (not available)
                      (< c count))
-            (logging/info (format "wait %s" f))
             (Thread/sleep 1000)
             (recur (check-fn) (inc c)))))))
 
@@ -104,7 +103,6 @@
 
 (defn reduce-hist
   [key ref bin-size]
-  (logging/info key ref bin-size)
   (wait-for-availability (hist-path key ref bin-size))
   (try
     (let [path (hist-path key ref bin-size)

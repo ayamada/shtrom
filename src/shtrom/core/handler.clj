@@ -11,20 +11,18 @@
     (catch Exception e 0)))
 
 (defroutes app-routes
-  (context "/:key/:ref/:binsize" [key ref binsize]
-           (defroutes hist-routes
-             (GET  "/" [start end] (read-hist key
-                                              ref
-                                              (str->int binsize)
-                                              (str->int start)
-                                              (str->int end)))
-             (POST "/" req (write-hist key
-                                       ref
-                                       (str->int binsize)
-                                       req))
-             (POST "/reduction" req (reduce-hist key
-                                                 ref
-                                                 (str->int binsize)))))
+  (GET  "/:key/:ref/:binsize" [key ref binsize start end] (read-hist key
+                                                                     ref
+                                                                     (str->int binsize)
+                                                                     (str->int start)
+                                                                     (str->int end)))
+  (POST "/:key/:ref/:binsize" {:keys [params] :as req} (write-hist (params :key)
+                                                                   (params :ref)
+                                                                   (str->int (params :binsize))
+                                                                   req))
+  (POST "/:key/:ref/:binsize/reduction" {:keys [params] :as req} (reduce-hist (params :key)
+                                                                              (params :ref)
+                                                                              (str->int (params :binsize))))
   (route/not-found (-> (response/response "")
                        (response/header "Content-Type" "application/octet-stream"))))
 
