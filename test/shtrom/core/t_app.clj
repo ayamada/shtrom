@@ -5,7 +5,8 @@
   (:require [clojure.java.io :as io]
             [ring.mock.request :refer [request query-string body]]
             (shtrom.core [handler :refer [app]]
-                         [request :refer [init-request]])))
+                         [request :refer [init-request]]
+                         [util :refer [delete-if-exists]])))
 
 (defn- prepare
   []
@@ -15,17 +16,13 @@
 
 (defn- clean-up
   []
-  (let [delete-if-exist (fn [f]
-                          (let [file (io/file f)]
-                            (when (.exists file)
-                              (.delete file))))
-        test1-data-dir (str test-dir "/" test1-key)
+  (let [test1-data-dir (str test-dir "/" test1-key)
         test2-data-dir (str test-dir "/" test2-key)]
-    (delete-if-exist (str test1-data-dir "/" "test-64.bist"))
-    (delete-if-exist (str test1-data-dir "/" "test-128.bist"))
-    (delete-if-exist test1-data-dir)
-    (delete-if-exist (str test2-data-dir "/" "test-64.bist"))
-    (delete-if-exist test2-data-dir)))
+    (delete-if-exists (str test1-data-dir "/" "test-64.bist"))
+    (delete-if-exists (str test1-data-dir "/" "test-128.bist"))
+    (delete-if-exists test1-data-dir)
+    (delete-if-exists (str test2-data-dir "/" "test-64.bist"))
+    (delete-if-exists test2-data-dir)))
 
 (with-state-changes [(before :facts (do
                                       (prepare)
@@ -81,3 +78,22 @@
         => (just {:body test-reduce-hist-body
                   :headers {"Content-Length" (str test-reduce-content-length), "Content-Type" "application/octet-stream"}
                   :status 200})))
+
+(with-state-changes [(before :facts (init-request "test.shtrom.config.clj"))
+                     (after :facts (clean-up))]
+  (fact "clear histogram"
+        (app (-> (request :post (format "/%s/%s/%d" test1-key test-ref test-bin-size))
+                 (body (values->bytes (nth test-hist-body 2)))))
+        => (just {:body "OK"
+                  :headers {}
+                  :status 200})
+        (app (request :delete (format "/%s" test1-key)))
+        => (just {:body "OK"
+                  :headers {}
+                  :status 200})
+        (app (-> (request :get (format "/%s/%s/%d" test1-key test-ref test-bin-size))
+                 (query-string {:start 0
+                                :end 100})))
+        => (just {:body ""
+                  :headers {"Content-Type" "application/octet-stream"}
+                  :status 404})))

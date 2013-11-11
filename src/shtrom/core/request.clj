@@ -6,7 +6,7 @@
                                       values->content values->content-length
                                       byte-array->data http-body->bytes
                                       reduce-values
-                                      file-size]]))
+                                      file-size delete-if-exists list-files]]))
 
 (declare data-dir)
 
@@ -35,6 +35,10 @@
                    (throw (RuntimeException. (str "Configuration file not found: " f)))
                    (read-string (slurp rsrc)))]
         (def data-dir (:data-dir conf)))))
+
+(defn hist-dir
+  [key]
+  (format "%s/%s" data-dir key))
 
 (defn hist-path
   [key ref bin-size]
@@ -120,3 +124,11 @@
     (catch java.io.EOFException e (do
                                     (logging/warn (format "reduce-hist: eof: %s %s %d" key ref bin-size))
                                     nil))))
+
+(defn clear-hist
+  [key]
+  (let [dir-path (hist-dir key)]
+    (doseq [f (list-files dir-path)]
+      (delete-if-exists (str dir-path "/" f)))
+    (delete-if-exists dir-path)
+    (success "OK")))

@@ -17,7 +17,19 @@
    (> i len) len
    :else i))
 
-;; reader
+;; filesystem
+
+(defn delete-if-exists
+  [f]
+  (let [file (io/file f)]
+    (when (.exists file)
+      (.delete file))))
+
+(defn list-files
+  [d]
+  (let [dir (io/file d)]
+    (when (.exists dir)
+      (seq (.list dir)))))
 
 (defn file-size
   [^String path]
@@ -25,6 +37,8 @@
     (when-not (.exists f)
       (throw (java.io.FileNotFoundException.)))
     (.length f)))
+
+;; reader
 
 (defn- breader
   [^String path]
@@ -148,7 +162,7 @@
           (.put bb data 0 l)
           (recur (.read input data 0 data-size)))))))
 
-;; convert utility
+;; conversion utility
 
 (defn hist->bist
   [hist-path]

@@ -3,7 +3,7 @@
   (:require [compojure.handler :as handler]
             [compojure.route :as route]
             [ring.util.response :as response]
-            [shtrom.core.request :refer [read-hist write-hist reduce-hist init-request]]))
+            [shtrom.core.request :refer [read-hist write-hist reduce-hist clear-hist init-request]]))
 
 (defn- str->int [str]
   (try
@@ -23,6 +23,7 @@
   (POST "/:key/:ref/:binsize/reduction" {:keys [params] :as req} (reduce-hist (params :key)
                                                                               (params :ref)
                                                                               (str->int (params :binsize))))
+  (DELETE "/:key" [key] (clear-hist key))
   (route/not-found (-> (response/response "")
                        (response/header "Content-Type" "application/octet-stream"))))
 
