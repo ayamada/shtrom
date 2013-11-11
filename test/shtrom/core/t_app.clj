@@ -96,4 +96,9 @@
                                 :end 100})))
         => (just {:body ""
                   :headers {"Content-Type" "application/octet-stream"}
-                  :status 404})))
+                  :status 404})
+        (app (request :delete (format "/notfound")))
+        => (just {:body "OK"
+                  :headers {}
+                  :status 200})
+))
