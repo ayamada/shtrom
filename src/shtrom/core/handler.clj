@@ -2,8 +2,10 @@
   (:use compojure.core)
   (:require [compojure.handler :as handler]
             [compojure.route :as route]
+            [ring.adapter.jetty :as jetty]
             [ring.util.response :as response]
-            [shtrom.core.request :refer [read-hist write-hist reduce-hist clear-hist init-request]]))
+            [shtrom.core.request :refer [read-hist write-hist reduce-hist clear-hist init-request port]])
+  (:gen-class))
 
 (defn- str->int [str]
   (try
@@ -33,3 +35,9 @@
 (defn init
   []
   (init-request))
+
+(defn -main
+  []
+  (init)
+  (let [port (or port 3001)]
+    (jetty/run-jetty #'app {:port port :join? false})))

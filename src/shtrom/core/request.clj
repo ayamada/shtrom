@@ -30,11 +30,17 @@
   ([]
      (init-request default-config-filename))
   ([f]
-      (let [rsrc (io/resource f)
-            conf (if (nil? rsrc)
-                   (throw (RuntimeException. (str "Configuration file not found: " f)))
-                   (read-string (slurp rsrc)))]
-        (def data-dir (:data-dir conf)))))
+     (let [rsrc (let [f-classpath (io/resource f)
+                      f-etc (io/file (str "/etc/" f))]
+                  (cond
+                   (not (nil? f-classpath)) f-classpath
+                   (.isFile f-etc) f-etc
+                   :else nil))
+           conf (if (nil? rsrc)
+                  (throw (RuntimeException. (str "Configuration file not found: " f)))
+                  (read-string (slurp rsrc)))]
+       (def data-dir (:data-dir conf))
+       (def port (:port conf)))))
 
 (defn hist-dir
   [key]
@@ -47,7 +53,7 @@
 (defn wait-for-availability
   ([f & {:keys [size count]
          :or {size -1
-            count 3}}]
+              count 3}}]
      (let [check-fn (if (neg? size)
                       (fn []
                         (try
@@ -57,12 +63,12 @@
                         (try
                           (= size (file-size f))
                           (catch Exception e false))))]
-        (loop [available (check-fn)
-               c 0]
-          (when (and (not available)
-                     (< c count))
-            (Thread/sleep 1000)
-            (recur (check-fn) (inc c)))))))
+       (loop [available (check-fn)
+              c 0]
+         (when (and (not available)
+                    (< c count))
+           (Thread/sleep 1000)
+           (recur (check-fn) (inc c)))))))
 
 ;; handle
 
