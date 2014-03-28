@@ -6,15 +6,13 @@ if [ $# -ne 1 ]; then
 fi
 
 lein clean
-lein with-profile provided bin
+lein with-profile provided uberjar
 
-TARGET=target/shtrom
-TARGET_JAR=`ls target/shtrom-*-standalone.jar`
-VERSION=`echo $TARGET_JAR | sed -e 's/^target\/shtrom-\(.*\)-standalone\.jar$/\1/'`
+TARGET=`ls target/shtrom-*-standalone.jar`
 BUCKET=$1
 
 echo "Deploy $TARGET to $BUCKET with version $VERSION"
 
-aws s3 cp $TARGET s3://$BUCKET/shtrom/shtrom-$VERSION
+aws s3 cp $TARGET s3://$BUCKET/shtrom/
 
 echo "Done"
