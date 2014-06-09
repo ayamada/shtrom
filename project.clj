@@ -4,10 +4,10 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/tools.logging "0.2.6"]
-                 [ring/ring-core "1.2.2"]
-                 [compojure "1.1.6"]
-                 [ring/ring-jetty-adapter "1.2.2"]]
+                 [org.clojure/tools.logging "0.3.0"]
+                 [ring/ring-core "1.3.0"]
+                 [compojure "1.1.8"]
+                 [ring/ring-jetty-adapter "1.3.0"]]
   :plugins [[lein-ring "0.8.2"]
             [lein-midje "3.1.3"]]
   :profiles {:dev {:dependencies [[ring-mock "0.1.5"]
