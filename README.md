@@ -1,14 +1,16 @@
 # shtrom
 
-A Clojure library designed to ... well, that part is up to you.
+A histogram data store that is specialized for short read coverage
 
 ## Usage
 
-FIXME
+TODO
 
 ## License
 
-Copyright © 2013 FIXME
+Copyright 2014 [Xcoo, Inc.][xcoo]
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Licensed under the [Apache License, Version 2.0][apache-license-2.0].
+
+[xcoo]: http://www.xcoo.jp/
+[apache-license-2.0]: http://www.apache.org/licenses/LICENSE-2.0.html
