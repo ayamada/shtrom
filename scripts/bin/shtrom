@@ -1,0 +1,4 @@
+#!/bin/sh
+
+cd $(dirname $0)/../
+exec java -server -jar /var/lib/shtrom/shtrom.jar

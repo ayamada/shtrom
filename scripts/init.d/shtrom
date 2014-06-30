@@ -1,0 +1,55 @@
+#!/bin/bash
+
+DAEMON="/usr/local/bin/shtrom"
+DAEMON_ARGS=""
+
+PIDFILE="/var/run/shtrom.pid"
+
+[ -x "$DAEMON" ] || exit 0
+
+SCRIPT_NAME=/etc/init.d/shtrom
+
+SHTROM_BASE=/var/lib/shtrom
+SHTROM_USER=shtrom
+
+start() {
+  echo "Starting Shtrom"
+
+  start-stop-daemon --start \
+    --chdir ${SHTROM_BASE} \
+    --chuid ${SHTROM_USER} \
+    -m --pidfile ${PIDFILE} \
+    -b --exec ${DAEMON} -- ${DAEMON_ARGS}
+}
+
+stop() {
+  echo "Stopping Shtrom"
+
+  start-stop-daemon --stop \
+    --retry=TERM/30/KILL/5 \
+    --chdir ${SHTROM_BASE} \
+    --pidfile ${PIDFILE}
+
+  if [ -e ${PIDFILE} ]; then
+      rm -f ${PIDFILE}
+  fi
+}
+
+case "$1" in
+  start)
+  start
+  ;;
+  stop)
+  stop
+  ;;
+  restart)
+  stop
+  sleep 1
+  start
+  ;;
+  *)
+  echo "Usage: $SCRIPT_NAME {start|stop|restart}" >&2
+  exit 3
+  ;;
+esac
+
