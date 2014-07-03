@@ -1,1 +1,2 @@
-{:data-dir "/tmp"}
+{:data-dir "/tmp"
+ :port 3001}

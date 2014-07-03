@@ -13,10 +13,10 @@
   :profiles {:dev {:dependencies [[ring-mock "0.1.5"]
                                   [midje "1.6.3"]
                                   [javax.servlet/servlet-api "2.5"]]}}
-  :ring {:handler shtrom.core.handler/app
-         :init shtrom.core.handler/init
+  :ring {:handler shtrom.handler/app
+         :init shtrom.handler/init
          :port 3001
          :war-exclusions [#".+?\.config\.clj"]}
   :jar-exclusions [#".+?\.config\.clj"]
-  :main shtrom.core.handler
-  :aot [shtrom.core.handler])
+  :main shtrom.handler
+  :aot [shtrom.handler])
