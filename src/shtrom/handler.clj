@@ -28,8 +28,7 @@
                                                                                    (params :ref)
                                                                                    (str->int (params :binsize))))
   (DELETE "/:key" [key] (data/clear-hist key))
-  (route/not-found (-> (response/response "")
-                       (response/header "Content-Type" "application/octet-stream"))))
+  (route/not-found "Not Found"))
 
 (def app
   (handler/site app-routes))
