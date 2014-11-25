@@ -13,6 +13,8 @@
                  [ring/ring-core "1.3.1"]
                  [compojure "1.2.1"]
                  [ring/ring-jetty-adapter "1.3.1"]]
+  :jar-exclusions [#".+?\.config\.clj"
+                   #"log4j\.properties"]
   :plugins [[lein-ring "0.8.2"]
             [lein-midje "3.1.3"]]
   :profiles {:dev {:dependencies [[ring-mock "0.1.5"]
@@ -21,8 +23,7 @@
   :ring {:handler shtrom.handler/app
          :init shtrom.handler/init
          :port 3001
-         :war-exclusions [#".+?\.config\.clj"]}
-  :jar-exclusions [#".+?\.config\.clj"
-                   #"log4j\.properties"]
+         :war-exclusions [#".+?\.config\.clj"
+                          #"log4j\.properties"]}
   :main shtrom.handler
   :aot :all)
