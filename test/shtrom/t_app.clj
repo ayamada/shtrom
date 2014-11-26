@@ -66,12 +66,24 @@
     => (just {:body "OK"
               :headers {}
               :status 200})
+    (app (-> (request :post (format "/%s/%s/%d" test2-key test-ref test-small-bin-size))
+             (body (values->bytes (nth test-long-hist-body 2)))))
+    => (just {:body "OK"
+              :headers {}
+              :status 200})
     (parse-body
      (app (-> (request :get (format "/%s/%s/%d" test2-key test-ref test-bin-size))
               (query-string {:start 0
                              :end 256}))))
     => (just {:body test-hist-body
               :headers {"Content-Length" (str test-content-length), "Content-Type" "application/octet-stream"}
+              :status 200})
+    (parse-body
+     (app (-> (request :get (format "/%s/%s/%d" test2-key test-ref test-small-bin-size))
+              (query-string {:start 0
+                             :end 256}))))
+    => (just {:body test-long-hist-body
+              :headers {"Content-Length" (str test-long-content-length), "Content-Type" "application/octet-stream"}
               :status 200})))
 
 (with-state-changes [(before :facts (do
