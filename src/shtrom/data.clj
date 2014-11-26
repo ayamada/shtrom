@@ -126,7 +126,7 @@
       (do
         (prepare-file info-path)
         (let [info (load-info! info-path :force true)
-              ref-info (let [i (get info rname nil)]
+              ref-info (let [i (get (:refs info) rname nil)]
                          (if i
                            i
                            (add-ref-info! info-path info rname)))
