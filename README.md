@@ -2,6 +2,8 @@
 
 A histogram data store that is specialized for short read coverage
 
+[![Build Status](https://travis-ci.org/chrovis/shtrom.svg?branch=master)](https://travis-ci.org/chrovis/shtrom)
+
 ## Usage
 
 TODO
