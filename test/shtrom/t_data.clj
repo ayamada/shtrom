@@ -1,6 +1,6 @@
-(ns shtrom.core.t-data)
+(ns shtrom.t-data)
 
-(def test-dir "/tmp")
+(def test-dir "/tmp/shtrom-test")
 
 (def test1-key "1")
 (def test2-key "2")
@@ -16,4 +16,4 @@
 (def test-content-length (+ 16 (* test-hist-length 4)))
 (def test-reduce-content-length (+ 16 (* test-reduce-hist-length 4)))
 
-(def test-resource-path "test/resources/test-64.bist")
+(def test-resources-dir "test-resources")

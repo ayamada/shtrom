@@ -1,1 +1,1 @@
-{:data-dir "/tmp"}
+{:data-dir "/tmp/shtrom-test"}

@@ -17,7 +17,7 @@
    (> i len) len
    :else i))
 
-;; filesystem
+;;; filesystem
 
 (defn delete-if-exists
   [f]
@@ -38,7 +38,7 @@
       (throw (java.io.FileNotFoundException.)))
     (.length f)))
 
-;; reader
+;;; reader
 
 (defn- breader
   [^String path]
@@ -76,7 +76,7 @@
     (.flip bb)
     (.getInt bb)))
 
-;; writer
+;;; writer
 
 (defn- bwriter
   [^String  path]
@@ -88,7 +88,7 @@
     (.putInt bb val)
     (.write wtr (.array bb) 0 4)))
 
-;; public
+;;; public
 
 (defn bist-read
   ([^String f]
@@ -148,7 +148,7 @@
             dir-f (io/file dir-path)]
         (.mkdirs dir-f)))))
 
-;; http
+;;; http
 
 (defn http-body->bytes
   [input len]
@@ -162,7 +162,7 @@
           (.put bb data 0 l)
           (recur (.read input data 0 data-size)))))))
 
-;; conversion utility
+;;; conversion utility
 
 (defn hist->bist
   [hist-path]

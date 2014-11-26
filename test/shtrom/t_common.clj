@@ -1,4 +1,4 @@
-(ns shtrom.core.t-common
+(ns shtrom.t-common
   (:import [java.nio ByteBuffer ByteOrder]))
 
 (defn- ^ByteBuffer gen-byte-buffer

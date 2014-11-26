@@ -11,3 +11,7 @@
 (defn cache-path
   [key]
   (str config/data-dir "/" key))
+
+(defn ref-key
+  [idx]
+  (format "%06d" idx))

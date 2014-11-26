@@ -28,7 +28,9 @@
                                                                                    (params :ref)
                                                                                    (str->int (params :binsize))))
   (DELETE "/:key" [key] (data/clear-hist key))
-  (route/not-found "Not Found"))
+  (route/not-found (-> (response/response "Not Found")
+                       (response/header "Content-Type" "text/plain")
+                       (response/status 404))))
 
 (def app
   (handler/site app-routes))
