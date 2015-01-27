@@ -15,7 +15,7 @@
                  [ring/ring-jetty-adapter "1.3.1"]]
   :jar-exclusions [#".+?\.config\.clj"
                    #"log4j\.properties"]
-  :plugins [[lein-ring "0.8.2"]
+  :plugins [[lein-ring "0.9.1"]
             [lein-midje "3.1.3"]]
   :profiles {:dev {:dependencies [[ring-mock "0.1.5"]
                                   [midje "1.6.3"]
