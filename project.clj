@@ -3,22 +3,22 @@
   :url "http://github.com/chrovis/shtrom"
   :license {:name "Apache License, Version 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
-  :dependencies [[org.clojure/clojure "1.6.0"]
+  :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/tools.logging "0.3.1"]
-                 [org.slf4j/slf4j-log4j12 "1.7.7"]
+                 [org.slf4j/slf4j-log4j12 "1.7.12"]
                  [log4j/log4j "1.2.17" :exclusions [javax.mail/mail
                                                     javax.jms/jms
                                                     com.sun.jmdk/jmxtools
                                                     com.sun.jmx/jmxri]]
-                 [ring/ring-core "1.3.1"]
-                 [compojure "1.2.1"]
-                 [ring/ring-jetty-adapter "1.3.1"]]
+                 [ring/ring-core "1.4.0"]
+                 [compojure "1.4.0"]
+                 [ring/ring-jetty-adapter "1.4.0"]]
   :jar-exclusions [#".+?\.config\.clj"
                    #"log4j\.properties"]
-  :plugins [[lein-ring "0.9.1"]
-            [lein-midje "3.1.3"]]
+  :plugins [[lein-ring "0.9.7"]
+            [lein-midje "3.2"]]
   :profiles {:dev {:dependencies [[ring-mock "0.1.5"]
-                                  [midje "1.6.3"]
+                                  [midje "1.8.2"]
                                   [javax.servlet/servlet-api "2.5"]]}}
   :ring {:handler shtrom.handler/app
          :init shtrom.handler/init
@@ -26,4 +26,8 @@
          :war-exclusions [#".+?\.config\.clj"
                           #"log4j\.properties"]}
   :main shtrom.handler
-  :aot :all)
+  :aot :all
+  :jvm-opts ["-Dcom.sun.management.jmxremote"
+             "-Dcom.sun.management.jmxremote.ssl=false"
+             "-Dcom.sun.management.jmxremote.authenticate=false"
+             "-Dcom.sun.management.jmxremote.port=43001"])
