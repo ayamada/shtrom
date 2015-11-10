@@ -1,6 +1,7 @@
 (ns shtrom.handler
   (:use compojure.core)
-  (:require [compojure.handler :as handler]
+  (:require [clojure.tools.logging :as logging]
+            [compojure.handler :as handler]
             [compojure.route :as route]
             [ring.adapter.jetty :as jetty]
             [ring.util.response :as response]
@@ -14,20 +15,37 @@
     (Integer. (re-find  #"\d+" str))
     (catch Exception e 0)))
 
+(defmacro wrap
+  [req & h]
+  `(let [start# (. System (nanoTime))
+         ret# ~h
+         elapsed# (/ (double (- (. System (nanoTime)) start#)) 1000000.0)]
+     (logging/info (str {:route (:compojure/route ~req)
+                         :elapsed elapsed#
+                         :params (:params ~req)}))
+     ret#))
+
 (defroutes app-routes
-  (GET  "/:key/:ref/:binsize" [key ref binsize start end] (data/read-hist key
-                                                                          ref
-                                                                          (str->int binsize)
-                                                                          (str->int start)
-                                                                          (str->int end)))
-  (POST "/:key/:ref/:binsize" {:keys [params] :as req} (data/write-hist (params :key)
-                                                                        (params :ref)
-                                                                        (str->int (params :binsize))
-                                                                        req))
-  (POST "/:key/:ref/:binsize/reduction" {:keys [params] :as req} (data/reduce-hist (params :key)
-                                                                                   (params :ref)
-                                                                                   (str->int (params :binsize))))
-  (DELETE "/:key" [key] (data/clear-hist key))
+  (GET  "/:key/:ref/:binsize" [key ref binsize start end :as req]
+        (wrap req data/read-hist
+              key
+              ref
+              (str->int binsize)
+              (str->int start)
+              (str->int end)))
+  (POST "/:key/:ref/:binsize" [key ref binsize :as req]
+        (wrap req data/write-hist
+              key
+              ref
+              (str->int binsize)
+              req))
+  (POST "/:key/:ref/:binsize/reduction" [key ref binsize :as req]
+        (wrap req data/reduce-hist
+              key
+              ref
+              (str->int binsize)))
+  (DELETE "/:key" [key :as req]
+          (wrap req data/clear-hist key))
   (route/not-found (-> (response/response "Not Found")
                        (response/header "Content-Type" "text/plain")
                        (response/status 404))))
