@@ -1,8 +1,8 @@
 (ns shtrom.t-app
-  (:use [midje.sweet]
-        [shtrom.t-data]
-        [shtrom.t-common])
-  (:require [clojure.java.io :as io]
+  (:require [midje.sweet :refer :all]
+            [shtrom.t-data :refer :all]
+            [shtrom.t-common :refer :all]
+            [clojure.java.io :as io]
             [ring.mock.request :refer [request query-string body]]
             (shtrom [handler :refer [app]]
                     [config :refer [load-config]]
@@ -105,6 +105,17 @@
               :status 200})))
 
 (with-state-changes [(before :facts (do
+                                      (load-config "test.shtrom.config.clj")
+                                      (prepare-cache!)))
+                     (after :facts (clean-up))]
+  (fact "reduce histogram (invalid file)"
+    (app (-> (request :post (format "/%s/%s/%d/reduction" test1-key test-ref test-bin-size))))
+    => (just {:body "Not Found"
+              :headers {"Content-Type" "text/plain"}
+              :status 404})))
+
+(with-state-changes [(before :facts (do
+                                      (prepare)
                                       (load-config "test.shtrom.config.clj")
                                       (prepare-cache!)))
                      (after :facts (clean-up))]

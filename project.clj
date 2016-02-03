@@ -20,6 +20,7 @@
             [lein-midje "3.2"]]
   :profiles {:dev {:dependencies [[ring-mock "0.1.5"]
                                   [midje "1.8.3"]
+                                  [shtrom-client "0.1.0-SNAPSHOT"]
                                   [javax.servlet/servlet-api "2.5"]]}}
   :ring {:handler shtrom.handler/app
          :init shtrom.handler/init
