@@ -5,7 +5,7 @@
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/tools.logging "0.3.1"]
-                 [org.slf4j/slf4j-log4j12 "1.7.12"]
+                 [org.slf4j/slf4j-log4j12 "1.7.14"]
                  [log4j/log4j "1.2.17" :exclusions [javax.mail/mail
                                                     javax.jms/jms
                                                     com.sun.jmdk/jmxtools
@@ -16,9 +16,10 @@
   :jar-exclusions [#".+?\.config\.clj"
                    #"log4j\.properties"]
   :plugins [[lein-ring "0.9.7"]
+            [lein-cloverage "1.0.6"]
             [lein-midje "3.2"]]
   :profiles {:dev {:dependencies [[ring-mock "0.1.5"]
-                                  [midje "1.8.2"]
+                                  [midje "1.8.3"]
                                   [javax.servlet/servlet-api "2.5"]]}}
   :ring {:handler shtrom.handler/app
          :init shtrom.handler/init
