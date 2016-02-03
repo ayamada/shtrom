@@ -169,10 +169,8 @@
 (defn clear-hist
   ""
   [key]
-  (try
-    (let [dir-path (hist-dir key)]
-      (doseq [f (list-files dir-path)]
-        (delete-if-exists (str dir-path "/" f)))
-      (delete-if-exists dir-path)
-      (success "OK"))
-    (catch java.io.FileNotFoundException e (success "OK"))))
+  (let [dir-path (hist-dir key)]
+    (doseq [f (list-files dir-path)]
+      (delete-if-exists (str dir-path "/" f)))
+    (delete-if-exists dir-path)
+    (success "OK")))
