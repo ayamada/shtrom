@@ -5,32 +5,10 @@
             [shtrom.handler :as handler]
             [shtrom.client :as client]))
 
-(def ^:private jetty-server (atom nil))
-
-(defn- run-server! []
-  (when-not @jetty-server
-    (handler/init)
-    (let [port (or config/port 3001)
-          options {:port port
-                   :join? false
-                   :daemon? true}
-          server (jetty/run-jetty #'shtrom.handler/app options)]
-      (reset! jetty-server server))))
-
-(defn- shutdown-server! []
-  (when @jetty-server
-    (.stop @jetty-server)
-    (Thread/sleep 1000)
-    (reset! jetty-server nil)))
-
 (def test-key "0")
 (def test-ref "test")
 (def test-bin-size 64)
 (def test-values [345 127 493 312])
-
-(defn test-shtrom-init
-  []
-  (client/shtrom-init "test.shtrom-client.config.clj"))
 
 (def long-test-refs ["test-long-a" "test-long-b" "test-long-c" "test-long-d" "test-long-e" "test-long-f" "test-long-g" "test-long-h"])
 (def max-value 128)
@@ -63,9 +41,25 @@
     refs))
   nil)
 
-(with-state-changes [(before :facts (do
-                                      (test-shtrom-init)
-                                      (run-server!)))
+(def ^:private jetty-server (atom nil))
+
+(defn- run-server! []
+  (client/shtrom-init "test.shtrom-client.config.clj")
+  (when-not @jetty-server
+    (handler/init)
+    (let [options {:port client/port
+                   :join? false
+                   :daemon? true}
+          server (jetty/run-jetty #'shtrom.handler/app options)]
+      (reset! jetty-server server))))
+
+(defn- shutdown-server! []
+  (when @jetty-server
+    (.stop @jetty-server)
+    (Thread/sleep 1000)
+    (reset! jetty-server nil)))
+
+(with-state-changes [(before :facts (run-server!))
                      (after :facts (shutdown-server!))]
   (fact "save/load/reduce histogram"
     (client/save-hist test-key test-ref test-bin-size []) => (throws RuntimeException "Empty values")
@@ -76,9 +70,7 @@
     (client/reduce-hist test-key test-ref test-bin-size) => nil
     (client/delete-hist test-key) => nil))
 
-(with-state-changes [(before :facts (do
-                                      (test-shtrom-init)
-                                      (run-server!)))
+(with-state-changes [(before :facts (run-server!))
                      (after :facts (shutdown-server!))]
   (fact "concurrently reduce histogram"
     (concurrent-reduce test-key long-test-refs test-bin-size long-test-values) => nil
