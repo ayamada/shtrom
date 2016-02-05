@@ -45,7 +45,6 @@
 (def ^:private jetty-server (atom nil))
 
 (defn- run-server! []
-  (client/shtrom-init "test.shtrom-client.config.clj")
   (when-not @jetty-server
     (config/load-config "test.shtrom.config.clj")
     (cache/prepare-cache!)
@@ -61,20 +60,34 @@
     (Thread/sleep 1000)
     (reset! jetty-server nil)))
 
-(with-state-changes [(before :facts (run-server!))
+(with-state-changes [(before :facts (do
+                                      (client/shtrom-init "test.shtrom-client.config.clj")
+                                      (run-server!)))
                      (after :facts (shutdown-server!))]
   (fact "save/load/reduce histogram"
     (client/save-hist test-key test-ref test-bin-size []) => (throws RuntimeException "Empty values")
     (client/save-hist test-key test-ref test-bin-size test-values) => nil
     (client/load-hist "not" "found" test-bin-size 0 256) => [0 0 (list)]
     (client/load-hist test-key test-ref test-bin-size 0 256) => [0 256 test-values]
+    (client/load-hist test-key test-ref test-bin-size -1 256) => [0 256 test-values]
     (client/reduce-hist "not" "found" test-bin-size) => (throws RuntimeException #"Invalid key, ref or bin-size")
     (client/reduce-hist test-key test-ref test-bin-size) => nil
     (client/delete-hist test-key) => nil))
 
-(with-state-changes [(before :facts (run-server!))
+(with-state-changes [(before :facts (do
+                                      (client/shtrom-init "test.shtrom-client.config.clj")
+                                      (run-server!)))
                      (after :facts (shutdown-server!))]
   (fact "concurrently reduce histogram"
     (concurrent-reduce test-key long-test-refs test-bin-size long-test-values) => nil
     (client/delete-hist test-key) => nil))
 
+(fact "config file not found"
+  (client/shtrom-init) => (throws java.lang.RuntimeException))
+
+(with-state-changes [(before :facts (client/shtrom-init "test.shtrom-client.config.clj"))]
+  (fact "for server error"
+    (client/save-hist test-key test-ref test-bin-size test-values) => nil
+    (client/load-hist test-key test-ref test-bin-size 0 256) => nil
+    (client/reduce-hist test-key test-ref test-bin-size) => nil
+    (client/delete-hist test-key) => nil))
