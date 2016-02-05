@@ -14,7 +14,7 @@ TODO
 
 ## Get a coverage
 
-`lein cloverage shtrom.client shtrom.client.util`
+`lein cloverage shtrom.client`
 and open `target/coverage/index.html`
 
 ## License

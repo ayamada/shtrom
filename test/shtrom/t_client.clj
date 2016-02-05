@@ -70,6 +70,8 @@
     (client/load-hist "not" "found" test-bin-size 0 256) => [0 0 (list)]
     (client/load-hist test-key test-ref test-bin-size 0 256) => [0 256 test-values]
     (client/load-hist test-key test-ref test-bin-size -1 256) => [0 256 test-values]
+    (client/load-hist test-key test-ref test-bin-size 256 0) => [0 0 (list)]
+    (client/load-hist test-key test-ref test-bin-size 1 1) => [0 0 (list)]
     (client/reduce-hist "not" "found" test-bin-size) => (throws RuntimeException #"Invalid key, ref or bin-size")
     (client/reduce-hist test-key test-ref test-bin-size) => nil
     (client/delete-hist test-key) => nil))
