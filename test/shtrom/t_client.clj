@@ -2,6 +2,7 @@
   (:require [midje.sweet :refer :all]
             [ring.adapter.jetty :as jetty]
             [shtrom.config :as config]
+            [shtrom.cache :as cache]
             [shtrom.handler :as handler]
             [shtrom.client :as client]))
 
@@ -46,7 +47,8 @@
 (defn- run-server! []
   (client/shtrom-init "test.shtrom-client.config.clj")
   (when-not @jetty-server
-    (handler/init)
+    (config/load-config "test.shtrom.config.clj")
+    (cache/prepare-cache!)
     (let [options {:port client/port
                    :join? false
                    :daemon? true}
