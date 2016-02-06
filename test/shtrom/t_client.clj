@@ -10,6 +10,7 @@
 (def test-ref "test")
 (def test-bin-size 64)
 (def test-values [345 127 493 312])
+(def test-values-first [(first test-values)])
 
 (def long-test-refs ["test-long-a" "test-long-b" "test-long-c" "test-long-d" "test-long-e" "test-long-f" "test-long-g" "test-long-h"])
 (def max-value 128)
@@ -71,7 +72,7 @@
     (client/load-hist test-key test-ref test-bin-size 0 256) => [0 256 test-values]
     (client/load-hist test-key test-ref test-bin-size -1 256) => [0 256 test-values]
     (client/load-hist test-key test-ref test-bin-size 256 0) => [0 0 (list)]
-    (client/load-hist test-key test-ref test-bin-size 1 1) => anything
+    (client/load-hist test-key test-ref test-bin-size 1 1) => [0 64 test-values-first]
     (client/reduce-hist "not" "found" test-bin-size) => (throws RuntimeException #"Invalid key, ref or bin-size")
     (client/reduce-hist test-key test-ref test-bin-size) => nil
     (client/delete-hist test-key) => nil))
