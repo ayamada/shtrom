@@ -14,4 +14,3 @@
   (config/load-config "test2.shtrom.config.clj") => anything
   (delete-dir! (io/file config/data-dir)) => anything
   (cache/prepare-cache!) => anything)
-
