@@ -15,13 +15,14 @@
                  [ring/ring-jetty-adapter "1.4.0"]]
   :jar-exclusions [#".+?\.config\.clj"
                    #"log4j\.properties"]
-  :plugins [[lein-ring "0.9.7"]
-            [lein-cloverage "1.0.6"]
-            [lein-midje "3.2"]]
-  :profiles {:dev {:dependencies [[ring-mock "0.1.5"]
-                                  [midje "1.8.3"]
-                                  [shtrom-client "0.1.0-SNAPSHOT"]
-                                  [javax.servlet/servlet-api "2.5"]]}}
+  :profiles {:dev {:plugins [[lein-ring "0.9.7"]]
+                   :dependencies [[javax.servlet/servlet-api "2.5"]]}
+             :test {:resource-paths ["test-resources"]
+                    :plugins [[lein-cloverage "1.0.6"]
+                              [lein-midje "3.2"]]
+                    :dependencies [[ring-mock "0.1.5"]
+                                   [midje "1.8.3"]
+                                   [shtrom-client "0.1.0-SNAPSHOT"]]}}
   :ring {:handler shtrom.handler/app
          :init shtrom.handler/init
          :port 3001

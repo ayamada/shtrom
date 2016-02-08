@@ -2,6 +2,7 @@
   (:require [midje.sweet :refer :all]
             [shtrom.t-fixture :refer :all]
             [ring.adapter.jetty :as jetty]
+            [clojure.java.io :as io]
             [shtrom.config :as config]
             [shtrom.cache :as cache]
             [shtrom.handler :as handler]

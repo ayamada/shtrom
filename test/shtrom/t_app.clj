@@ -32,9 +32,12 @@
     (delete-if-exists test2-data-dir)
     (delete-if-exists test-dir)))
 
+(defn- load-test-config! []
+  (load-config "test.shtrom.config.clj"))
+
 (with-state-changes [(before :facts (do
                                       (prepare)
-                                      (load-config "test.shtrom.config.clj")
+                                      (load-test-config!)
                                       (prepare-cache!)))
                      (after :facts (clean-up))]
   (fact "read histogram"
@@ -53,7 +56,7 @@
               :status 404})))
 
 (with-state-changes [(before :facts (do
-                                      (load-config "test.shtrom.config.clj")
+                                      (load-test-config!)
                                       (prepare-cache!)))
                      (after :facts (clean-up))]
   (fact "write histogram"
@@ -88,7 +91,7 @@
 
 (with-state-changes [(before :facts (do
                                       (prepare)
-                                      (load-config "test.shtrom.config.clj")
+                                      (load-test-config!)
                                       (prepare-cache!)))
                      (after :facts (clean-up))]
   (fact "reduce histogram"
@@ -105,7 +108,7 @@
               :status 200})))
 
 (with-state-changes [(before :facts (do
-                                      (load-config "test.shtrom.config.clj")
+                                      (load-test-config!)
                                       (prepare-cache!)))
                      (after :facts (clean-up))]
   (fact "reduce histogram (invalid file)"
@@ -116,7 +119,7 @@
 
 (with-state-changes [(before :facts (do
                                       (prepare)
-                                      (load-config "test.shtrom.config.clj")
+                                      (load-test-config!)
                                       (prepare-cache!)))
                      (after :facts (clean-up))]
   (fact "clear histogram"
