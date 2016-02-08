@@ -11,6 +11,6 @@
   (.delete dir-or-file))
 
 (fact "shtrom.cache"
-  (config/load-config "test2.shtrom.config.clj") => anything
+  (config/load-config "test-cache.shtrom.config.clj") => anything
   (delete-dir! (io/file config/data-dir)) => anything
   (cache/prepare-cache!) => anything)
