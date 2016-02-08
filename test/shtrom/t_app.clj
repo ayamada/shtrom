@@ -1,6 +1,6 @@
 (ns shtrom.t-app
   (:require [midje.sweet :refer :all]
-            [shtrom.t-data :refer :all]
+            [shtrom.t-fixture :refer :all]
             [shtrom.t-common :refer :all]
             [clojure.java.io :as io]
             [ring.mock.request :refer [request query-string body]]

@@ -1,4 +1,4 @@
-(ns shtrom.t-data)
+(ns shtrom.t-fixture)
 
 (def test-dir "/tmp/shtrom-test")
 
