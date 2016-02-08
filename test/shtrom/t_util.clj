@@ -32,5 +32,6 @@
                      (after :facts (clean-histfile!))]
   (fact "hist->bist"
     (util/hist->bist (in-test-dir "dummy.txt")) => (throws Exception)
+    (.exists (io/file (in-test-dir "dummy.bist"))) => falsey
     (util/dir-hist->bist t-fixture/test-dir) => anything
     (.exists (io/file (in-test-dir "dummy.bist"))) => truthy))
