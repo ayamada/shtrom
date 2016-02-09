@@ -3,7 +3,4 @@ lein: lein2
 jdk:
   - oraclejdk8
   - oraclejdk7
-before_script:
-  - "echo $JVM_OPTS"
-  - "export JVM_OPTS=-Xmx1024m"
 script: lein2 with-profile dev,test midje
