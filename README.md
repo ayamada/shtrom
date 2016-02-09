@@ -1,6 +1,6 @@
 # shtrom
 
-A histogram data store that is specialized for short read coverage
+Fast data storage for depth and coverage of genome
 
 [![Build Status](https://travis-ci.org/chrovis/shtrom.svg?branch=master)](https://travis-ci.org/chrovis/shtrom)
 
@@ -8,20 +8,25 @@ A histogram data store that is specialized for short read coverage
 
 TODO
 
-## Test
+### Run tests
 
-`lein with-profile +test midje`
+```
+lein with-profile dev,test midje
+```
 
-## Get a coverage
+### Get coverage
 
-`lein with-profile +test cloverage shtrom.client`
-and open `target/coverage/index.html`
+```
+lein with-profile dev,test cloverage shtrom.client
+```
+
+and see `target/coverage/index.html`
 
 ## License
 
-Copyright 2014 [Xcoo, Inc.][xcoo]
+Copyright 2016 [Xcoo, Inc.][xcoo]
 
 Licensed under the [Apache License, Version 2.0][apache-license-2.0].
 
-[xcoo]: http://www.xcoo.jp/
+[xcoo]: https://xcoo.jp/
 [apache-license-2.0]: http://www.apache.org/licenses/LICENSE-2.0.html
