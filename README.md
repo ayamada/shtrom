@@ -8,6 +8,15 @@ A histogram data store that is specialized for short read coverage
 
 TODO
 
+## Test
+
+`lein with-profile +test midje`
+
+## Get a coverage
+
+`lein with-profile +test cloverage shtrom.client`
+and open `target/coverage/index.html`
+
 ## License
 
 Copyright 2014 [Xcoo, Inc.][xcoo]
