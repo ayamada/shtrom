@@ -48,6 +48,13 @@
     => (just {:body test-hist-body
               :headers {"Content-Length" (str test-content-length), "Content-Type" "application/octet-stream"}
               :status 200})
+    (parse-body
+      (app (-> (request :get (format "/%s/%s/%d" test1-key test-ref test-bin-size))
+               (query-string {:start 256
+                              :end 0}))))
+    => (just {:body [0 0 (list)]
+              :headers {"Content-Length" "16", "Content-Type" "application/octet-stream"}
+              :status 200})
     (app (-> (request :get (format "/%s/%s/%d" "not" "found" test-bin-size))
              (query-string {:start 0
                             :end 100})))

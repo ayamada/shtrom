@@ -16,8 +16,7 @@
   :jar-exclusions [#".+?\.config\.clj"
                    #"log4j\.properties"]
   :profiles {:dev {:plugins [[lein-ring "0.9.7"]]
-                   :dependencies [[javax.servlet/servlet-api "2.5"]
-                                  [shtrom-client "0.1.0-SNAPSHOT"]]
+                   :dependencies [[javax.servlet/servlet-api "2.5"]]
                    :jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.ssl=false"
                               "-Dcom.sun.management.jmxremote.authenticate=false"

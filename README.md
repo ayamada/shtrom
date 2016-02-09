@@ -17,7 +17,7 @@ lein with-profile dev,test midje
 ### Get coverage
 
 ```
-lein with-profile dev,test cloverage shtrom.client
+lein with-profile dev,test cloverage
 ```
 
 and see `target/coverage/index.html`
