@@ -1,8 +1,11 @@
 (ns shtrom.util
   (require [clojure.java.io :as io]
-           [clojure.string :as str])
+           [clojure.string :as str]
+           [cheshire.core :as cheshire])
   (:import [java.nio ByteBuffer ByteOrder]
-           [java.io DataInputStream DataOutputStream FileInputStream FileOutputStream IOException EOFException]))
+           [java.io DataInputStream DataOutputStream FileInputStream FileOutputStream
+            IOException EOFException ByteArrayInputStream ByteArrayOutputStream]
+           [java.util.zip GZIPOutputStream]))
 
 (defn- ^ByteBuffer gen-byte-buffer
   ([]
@@ -192,3 +195,17 @@
 (defn reduce-values
   [values]
   (map (fn [v] (apply + v)) (partition-all 2 values)))
+
+(defn- gzip
+  [^String s]
+  (with-open [bout (ByteArrayOutputStream.)]
+    (with-open [out (GZIPOutputStream. bout)]
+      (.write out (.getBytes s)))
+    (ByteArrayInputStream. (.toByteArray bout))))
+
+(defn json-response
+  [data & [status]]
+  {:status (or status 200)
+   :headers {"Content-Type" "application/json"
+             "Content-Encoding" "gzip"}
+   :body (gzip (cheshire/generate-string data))})

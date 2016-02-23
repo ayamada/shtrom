@@ -4,12 +4,15 @@
             [shtrom.t-common :refer :all]
             [clojure.java.io :as io]
             [ring.mock.request :refer [request query-string body]]
+            [cheshire.core :as cheshire]
             (shtrom [handler :refer [app]]
                     [config :refer [load-config]]
                     [cache :refer [prepare-cache!]]
-                    [util :refer [delete-if-exists]])))
+                    [util :refer [delete-if-exists]]))
+  (:import [java.util.zip GZIPInputStream]
+           [java.io ByteArrayInputStream]))
 
-(defn- prepare
+(defn- prepare-readable
   []
   (let [test1-data-dir (str test-dir "/" test1-key)]
     (.mkdirs (io/file test1-data-dir))
@@ -17,7 +20,19 @@
     (spit (str test1-data-dir "/main.info")
           (pr-str {:count 1
                    :refs {"test" {:name "test"
-                                  :index 0}}}))))
+                                  :index 0}}
+                   :state :available}))))
+
+(defn- prepare-writable
+  []
+  (let [test1-data-dir (str test-dir "/" test1-key)]
+    (.mkdirs (io/file test1-data-dir))
+    (io/copy (io/file (str test-resources-dir "/test.bist")) (io/file (str test1-data-dir "/000000-64.bist")))
+    (spit (str test1-data-dir "/main.info")
+          (pr-str {:count 1
+                   :refs {"test" {:name "test"
+                                  :index 0}}
+                   :state :created}))))
 
 (defn- clean-up
   []
@@ -35,8 +50,13 @@
 (defn- load-test-config! []
   (load-config "test.shtrom.config.clj"))
 
+(defn- gunzip [^ByteArrayInputStream bais]
+  (.reset bais)
+  (with-open [gzis (GZIPInputStream. bais)]
+    (cheshire/parse-string (slurp gzis) true)))
+
 (with-state-changes [(before :facts (do
-                                      (prepare)
+                                      (prepare-readable)
                                       (load-test-config!)
                                       (prepare-cache!)))
                      (after :facts (clean-up))]
@@ -55,22 +75,30 @@
     => (just {:body [0 0 (list)]
               :headers {"Content-Length" "16", "Content-Type" "application/octet-stream"}
               :status 200})
-    (app (-> (request :get (format "/%s/%s/%d" "not" "found" test-bin-size))
-             (query-string {:start 0
-                            :end 100})))
-    => (just {:body "Not Found"
-              :headers {"Content-Type" "text/plain"}
-              :status 404})))
+    (-> (request :get (format "/%s/%s/%d" "not" "found" test-bin-size))
+        (query-string {:start 0 :end 100})
+        app
+        (update :body gunzip))
+    => {:body {:error {:code 1100 :type "IllegalState" :description "Bucket does not exist"}}
+        :headers {"Content-Type" "application/json" "Content-Encoding" "gzip"}
+        :status 404}))
 
 (with-state-changes [(before :facts (do
                                       (load-test-config!)
                                       (prepare-cache!)))
                      (after :facts (clean-up))]
   (fact "write histogram"
-    (app (-> (request :post (format "/%s/%s/%d" test2-key test-ref test-bin-size))))
-    => (just {:body #"\w"
-              :headers {}
-              :status 400})
+    (-> (request :post (str "/" test2-key))
+        app)
+    => {:body "Created"
+        :headers {}
+        :status 200}
+    (-> (request :post (format "/%s/%s/%d" test2-key test-ref test-bin-size))
+        app
+        (update :body gunzip))
+    => {:body {:error {:code 2000 :type "BadArgument"}}
+        :headers {"Content-Type" "application/json" "Content-Encoding" "gzip"}
+        :status 400}
     (app (-> (request :post (format "/%s/%s/%d" test2-key test-ref test-bin-size))
              (body (values->bytes (nth test-hist-body 2)))))
     => (just {:body "OK"
@@ -81,6 +109,11 @@
     => (just {:body "OK"
               :headers {}
               :status 200})
+    (-> (request :put (str "/" test2-key))
+        app)
+    => {:body "Built"
+        :headers {}
+        :status 200}
     (parse-body
      (app (-> (request :get (format "/%s/%s/%d" test2-key test-ref test-bin-size))
               (query-string {:start 0
@@ -97,7 +130,7 @@
               :status 200})))
 
 (with-state-changes [(before :facts (do
-                                      (prepare)
+                                      (prepare-writable)
                                       (load-test-config!)
                                       (prepare-cache!)))
                      (after :facts (clean-up))]
@@ -106,6 +139,11 @@
     => (just {:body "OK"
               :headers {}
               :status 200})
+    (-> (request :put (str "/" test1-key))
+        app)
+    => {:body "Built"
+        :headers {}
+        :status 200}
     (parse-body
       (app (-> (request :get (format "/%s/%s/%d" test1-key test-ref (* 2 test-bin-size)))
                (query-string {:start 0
@@ -119,13 +157,15 @@
                                       (prepare-cache!)))
                      (after :facts (clean-up))]
   (fact "reduce histogram (invalid file)"
-    (app (-> (request :post (format "/%s/%s/%d/reduction" test1-key test-ref test-bin-size))))
-    => (just {:body "Not Found"
-              :headers {"Content-Type" "text/plain"}
-              :status 404})))
+    (-> (request :post (format "/%s/%s/%d/reduction" test1-key test-ref test-bin-size))
+        app
+        (update :body gunzip))
+    => {:body {:error {:code 1100 :type "IllegalState" :description "Bucket does not exist"}}
+        :headers {"Content-Type" "application/json" "Content-Encoding" "gzip"}
+        :status 404}))
 
 (with-state-changes [(before :facts (do
-                                      (prepare)
+                                      (prepare-writable)
                                       (load-test-config!)
                                       (prepare-cache!)))
                      (after :facts (clean-up))]
@@ -139,13 +179,16 @@
     => (just {:body "OK"
               :headers {}
               :status 200})
-    (app (-> (request :get (format "/%s/%s/%d" test1-key test-ref test-bin-size))
-             (query-string {:start 0
-                            :end 100})))
-    => (just {:body "Not Found"
-              :headers {"Content-Type" "text/plain"}
-              :status 404})
-    (app (request :delete (format "/notfound")))
-    => (just {:body "OK"
-              :headers {}
-              :status 200})))
+    (-> (request :get (format "/%s/%s/%d" test1-key test-ref test-bin-size))
+        (query-string {:start 0 :end 100})
+        app
+        (update :body gunzip))
+    => {:body {:error {:code 1100 :type "IllegalState" :description "Bucket does not exist"}}
+        :headers {"Content-Type" "application/json" "Content-Encoding" "gzip"}
+        :status 404}
+    (-> (request :delete (format "/notfound"))
+        app
+        (update :body gunzip))
+    => {:body {:error {:code 1100 :type "IllegalState" :description "Bucket does not exist"}}
+        :headers {"Content-Type" "application/json" "Content-Encoding" "gzip"}
+        :status 404}))

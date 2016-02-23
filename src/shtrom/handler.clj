@@ -3,55 +3,66 @@
   (:require [clojure.tools.logging :as logging]
             [compojure.handler :as handler]
             [compojure.route :as route]
+            [compojure.coercions :as coercions]
             [ring.adapter.jetty :as jetty]
             [ring.util.response :as response]
+            [ring.middleware.defaults :as ring-defaults]
             [shtrom.config :as config]
             [shtrom.cache :as cache]
-            [shtrom.data :as data])
+            [shtrom.data :as data]
+            [shtrom.error :as error])
   (:gen-class))
 
-(defn- str->int [str]
-  (try
-    (Integer. (re-find  #"\d+" str))
-    (catch Exception e 0)))
-
-(defmacro wrap
-  [req & h]
-  `(let [start# (. System (nanoTime))
-         ret# ~h
-         elapsed# (/ (double (- (. System (nanoTime)) start#)) 1000000.0)]
-     (logging/info (str {:route (:compojure/route ~req)
-                         :elapsed elapsed#
-                         :params (:params ~req)}))
-     ret#))
+(defn- log-time-middleware [handler]
+  (fn [request]
+    (let [start (. System (nanoTime))
+          ret (handler request)
+          elapsed (/ (double (- (. System (nanoTime)) start)) 1000000.0)]
+      (logging/info (str {:route (:compojure/route request)
+                          :elapsed elapsed
+                          :params (:params request)}))
+      ret)))
 
 (defroutes app-routes
-  (GET  "/:key/:ref/:binsize" [key ref binsize start end :as req]
-        (wrap req data/read-hist
-              key
-              ref
-              (str->int binsize)
-              (str->int start)
-              (str->int end)))
-  (POST "/:key/:ref/:binsize" [key ref binsize :as req]
-        (wrap req data/write-hist
-              key
-              ref
-              (str->int binsize)
-              req))
-  (POST "/:key/:ref/:binsize/reduction" [key ref binsize :as req]
-        (wrap req data/reduce-hist
-              key
-              ref
-              (str->int binsize)))
-  (DELETE "/:key" [key :as req]
-          (wrap req data/clear-hist key))
-  (route/not-found (-> (response/response "Not Found")
-                       (response/header "Content-Type" "text/plain")
-                       (response/status 404))))
+  (GET  "/:key/:ref/:binsize"
+        [key :<< not-empty
+         ref :<< not-empty
+         binsize :<< coercions/as-int
+         start :<< coercions/as-int
+         end :<< coercions/as-int
+         :as req]
+        (data/read-hist key ref binsize start end))
+  (POST "/:key/:ref/:binsize"
+        [key :<< not-empty
+         ref :<< not-empty
+         binsize :<< coercions/as-int
+         :as req]
+        (data/write-hist key ref binsize req))
+  (POST "/:key/:ref/:binsize/reduction"
+        [key :<< not-empty
+         ref :<< not-empty
+         binsize :<< coercions/as-int
+         :as req]
+        (data/reduce-hist key ref binsize))
+  (POST "/:key"
+        [key :<< not-empty
+         :as req]
+        (data/create-bucket! key))
+  (PUT "/:key"
+       [key :<< not-empty
+        :as req]
+       (data/build-bucket! key))
+  (DELETE "/:key"
+          [key :<< not-empty
+           :as req]
+          (data/clear-hist key))
+  (route/not-found (error/bad-arg-error "No matching routes")))
 
 (def app
-  (handler/site app-routes))
+  (-> app-routes
+      (wrap-routes log-time-middleware)
+      (ring-defaults/wrap-defaults (-> ring-defaults/api-defaults
+                                       (assoc-in [:responses :content-types] nil)))))
 
 (defn init
   []
