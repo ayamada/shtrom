@@ -127,7 +127,7 @@
   [key]
   (let [path (info-path key)]
     (if-let [info (load-info! path :force false)]
-      (error/already-exists-error)
+      (error/already-exists-error (:state info))
       (do (prepare-file path)
           (load-info! path :force true)
           (success "Created")))))
