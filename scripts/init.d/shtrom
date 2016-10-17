@@ -1,55 +1,121 @@
-#!/bin/bash
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          shtrom
+# Required-Start:    $local_fs $network $remote_fs $syslog
+# Required-Stop:     $local_fs $network $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Fast data storage
+# Description:       Shtrom is a fast data storage for depth and
+#                    coverage of genome.
+### END INIT INFO
 
-DAEMON="/usr/local/bin/shtrom"
+# Author: Xcoo, Inc. <infrastructure@xcoo.jp>
+
+# Do NOT "set -e"
+
+# PATH should only include /usr/* if it runs after the mountnfs.sh script
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+DESC="shtrom"
+NAME=shtrom
+DAEMON=/usr/bin/shtrom
 DAEMON_ARGS=""
-
-PIDFILE="/var/run/shtrom.pid"
-
-[ -x "$DAEMON" ] || exit 0
-
-SCRIPT_NAME=/etc/init.d/shtrom
-
-SHTROM_BASE=/var/lib/shtrom
+PIDFILE=/var/run/$NAME.pid
+SCRIPTNAME=/etc/init.d/$NAME
+SHTROM_BASE=/usr/share/shtrom
 SHTROM_USER=shtrom
 
-start() {
-  echo "Starting Shtrom"
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
 
-  start-stop-daemon --start \
-    --chdir ${SHTROM_BASE} \
-    --chuid ${SHTROM_USER} \
-    -m --pidfile ${PIDFILE} \
-    -b --exec ${DAEMON} -- ${DAEMON_ARGS}
+# Read configuration variable file if it is present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+# Load the VERBOSE setting and other rcS variables
+. /lib/init/vars.sh
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.2-14) to ensure that this file is present
+# and status_of_proc is working.
+. /lib/lsb/init-functions
+
+do_start()
+{
+	# Return
+	#   0 if daemon has been started
+	#   1 if daemon was already running
+	#   2 if daemon could not be started
+	start-stop-daemon --start --chdir $SHTROM_BASE --chuid $SHTROM_USER --quiet --make-pidfile --pidfile $PIDFILE --startas $DAEMON --background --test > /dev/null \
+		|| return 1
+	start-stop-daemon --start --chdir $SHTROM_BASE --chuid $SHTROM_USER --quiet --make-pidfile --pidfile $PIDFILE --startas $DAEMON --background -- \
+		$DAEMON_ARGS \
+		|| return 2
 }
 
-stop() {
-  echo "Stopping Shtrom"
+do_stop()
+{
+	# Return
+	#   0 if daemon has been stopped
+	#   1 if daemon was already stopped
+	#   2 if daemon could not be stopped
+	#   other if a failure occurred
+	start-stop-daemon --stop --chdir $SHTROM_BASE --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE
+	RETVAL="$?"
+	[ "$RETVAL" = 2 ] && return 2
 
-  start-stop-daemon --stop \
-    --retry=TERM/30/KILL/5 \
-    --chdir ${SHTROM_BASE} \
-    --pidfile ${PIDFILE}
+	start-stop-daemon --stop --chdir $SHTROM_BASE --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
+	[ "$?" = 2 ] && return 2
+	rm -f $PIDFILE
+	return "$RETVAL"
+}
 
-  if [ -e ${PIDFILE} ]; then
-      rm -f ${PIDFILE}
-  fi
+do_reload() {
+	start-stop-daemon --stop --chdir $SHTROM_BASE --chuid $SHTROM_USER --signal 1 --quiet --pidfile $PIDFILE
+	return 0
 }
 
 case "$1" in
   start)
-  start
-  ;;
+	[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
+	do_start
+	case "$?" in
+		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+	esac
+	;;
   stop)
-  stop
-  ;;
-  restart)
-  stop
-  sleep 1
-  start
-  ;;
+	[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+	do_stop
+	case "$?" in
+		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+	esac
+	;;
+  status)
+	status_of_proc "$DAEMON" "$NAME" && exit 0 || exit $?
+	;;
+  restart|force-reload)
+	log_daemon_msg "Restarting $DESC" "$NAME"
+	do_stop
+	case "$?" in
+	  0|1)
+		do_start
+		case "$?" in
+			0) log_end_msg 0 ;;
+			1) log_end_msg 1 ;; # Old process is still running
+			*) log_end_msg 1 ;; # Failed to start
+		esac
+		;;
+	  *)
+		# Failed to stop
+		log_end_msg 1
+		;;
+	esac
+	;;
   *)
-  echo "Usage: $SCRIPT_NAME {start|stop|restart}" >&2
-  exit 3
-  ;;
+	echo "Usage: $SCRIPTNAME {start|stop|status|restart|force-reload}" >&2
+	exit 3
+	;;
 esac
 
+:

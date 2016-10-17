@@ -1,0 +1,15 @@
+[Unit]
+Description=Fast data storage
+After=network.target
+
+[Service]
+Type=simple
+User=shtrom
+Group=shtrom
+ExecStart=/usr/bin/shtrom
+
+RestartSec=1
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
