@@ -3,6 +3,8 @@
   :url "https://github.com/chrovis/shtrom"
   :license {:name "Apache License, Version 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
+  :source-paths ["src/clj"]
+  :java-source-paths ["src/java"]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/tools.logging "0.3.1"]
                  [org.slf4j/slf4j-log4j12 "1.7.16"]
