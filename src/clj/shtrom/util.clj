@@ -7,7 +7,8 @@
                     FileInputStream FileOutputStream
                     ByteArrayInputStream ByteArrayOutputStream
                     IOException EOFException)
-           [java.util.zip GZIPOutputStream]))
+           [java.util.zip GZIPOutputStream]
+           [shtrom Util]))
 
 (defn- ^ByteBuffer gen-byte-buffer
   ([]
@@ -101,9 +102,9 @@
        (with-open [rdr (breader f)]
          [0
           len
-          (doall (map (fn [i]
-                        (bread-integer rdr))
-                      (range 0 len)))])))
+          (int-array (map (fn [i]
+                            (bread-integer rdr))
+                          (range 0 len)))])))
   ([^String f ^Integer start ^Integer end]
      (let [len (quot (file-size f) 4)
            left (validate-index start len)
@@ -113,27 +114,30 @@
            (skip rdr (* left 4))
            [left
             right
-            (doall (map (fn [i]
-                          (bread-integer rdr))
-                        (range left right)))])
-         [0 0 (list)]))))
+            (int-array (map (fn [i]
+                              (bread-integer rdr))
+                            (range left right)))])
+         [0 0 (int-array nil)]))))
 
 (defn bist-write
-  [^String f values]
+  [^String f ^"[I" values]
   (with-open [wtr (bwriter f)]
-    (doseq [v values] (bwrite-integer wtr v))))
+    (dotimes [i (alength values)]
+      (let [v (aget values i)]
+        (bwrite-integer wtr v)))))
 
 (defn values->content-length
   [values]
-  (+ 16 (* 4 (count values))))
+  (+ 16 (* 4 (alength values))))
 
 (defn values->content
-  [start end values]
+  [start end ^"[I" values]
   (let [bb (gen-byte-buffer (values->content-length values))]
     (.putLong bb start)
     (.putLong bb end)
-    (doseq [v values]
-      (.putInt bb v))
+    (dotimes [i (alength values)]
+      (let [v (aget values i)]
+        (.putInt bb v)))
     (.array bb)))
 
 (defn byte-array->data
@@ -142,8 +146,8 @@
              (.put bytes 0 len)
              (.position 0))
         data-len (quot len 4)]
-    (map (fn [_] (.getInt bb))
-         (range data-len))))
+    (int-array (map (fn [_] (.getInt bb))
+                    (range data-len)))))
 
 (defn prepare-file
   [path]
@@ -196,7 +200,7 @@
 
 (defn reduce-values
   [values]
-  (map (fn [v] (apply + v)) (partition-all 2 values)))
+  (int-array (map (fn [v] (apply + v)) (partition-all 2 (seq values)))))
 
 (defn- gzip
   [^String s]

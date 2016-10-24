@@ -153,7 +153,7 @@
                (http-body->bytes (:body req) len))
         values (byte-array->data body len)
         info-path (info-path key)]
-    (if (pos? (count values))
+    (if (pos? (alength values))
       (let [_ (prepare-file info-path)
             info (load-info! info-path :force true)]
         (if info
@@ -191,7 +191,7 @@
                     [_ _ values] (bist-read path)
                     new-values (reduce-values values)
                     new-path (hist-path key rkey (* bin-size 2))
-                    new-size (* 4 (count new-values))]
+                    new-size (* 4 (alength new-values))]
                 (prepare-file new-path)
                 (bist-write new-path new-values)
                 (wait-for-availability new-path :size new-size)
