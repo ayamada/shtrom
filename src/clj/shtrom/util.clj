@@ -199,8 +199,8 @@
         (hist->bist f)))))
 
 (defn reduce-values
-  [values]
-  (int-array (map (fn [v] (apply + v)) (partition-all 2 (seq values)))))
+  [^"[I" values]
+  (Util/reduce values))
 
 (defn- gzip
   [^String s]
