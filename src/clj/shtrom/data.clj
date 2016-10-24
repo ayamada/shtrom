@@ -9,8 +9,7 @@
                                  file-size delete-if-exists list-files]]
             [shtrom.cache :refer [cache-path ref-key]]
             [shtrom.error :as error]
-            [clojure.edn :as edn])
-  (:import [shtrom.data IO]))
+            [clojure.edn :as edn]))
 
 ;;; response
 
