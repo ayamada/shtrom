@@ -2,16 +2,9 @@
   (require [clojure.java.io :as io]
            [clojure.string :as str]
            [cheshire.core :as cheshire])
-  (:import [java.nio ByteBuffer ByteOrder]
-           [java.io DataInputStream DataOutputStream FileInputStream FileOutputStream
-            IOException EOFException ByteArrayInputStream ByteArrayOutputStream]
-           [java.util.zip GZIPOutputStream]))
-
-(defn- ^ByteBuffer gen-byte-buffer
-  ([]
-     (gen-byte-buffer 8))
-  ([size]
-     (.order (ByteBuffer/allocate size) ByteOrder/BIG_ENDIAN)))
+  (:import [java.io File InputStream ByteArrayInputStream ByteArrayOutputStream]
+           [java.util.zip GZIPOutputStream]
+           [shtrom.util IOUtil]))
 
 (defn- validate-index
   [i len]
@@ -41,107 +34,37 @@
       (throw (java.io.FileNotFoundException.)))
     (.length f)))
 
-;;; reader
-
-(defn- breader
-  [^String path]
-  (DataInputStream. (FileInputStream. (io/file path))))
-
-(defn skip
-  [^DataInputStream rdr ^Integer n]
-  (.skipBytes rdr n)
-  nil)
-
-(defn- read-bytes
-  ([^DataInputStream rdr ^Integer l]
-     (let [ba (byte-array l)]
-       (.read rdr ba 0 l)
-       ba))
-  ([^DataInputStream rdr buffer offset ^Integer l]
-     (loop [total-read 0]
-       (when (< total-read l)
-         (let [n (.read rdr buffer (+ offset total-read) (- l total-read))]
-           (if (neg? n)
-             (throw (EOFException. "Premature EOF"))
-             (recur (+ total-read n))))))))
-
-(defn- read-byte-buffer
-  [^DataInputStream rdr ^ByteBuffer bb l]
-  {:pre (< l (.capacity bb))}
-  (read-bytes rdr (.array bb) 0 l)
-  (.limit bb (.capacity bb))
-  (.position bb l))
-
-(defn- bread-integer
-  [rdr]
-  (let [bb (gen-byte-buffer)]
-    (read-byte-buffer rdr bb 4)
-    (.flip bb)
-    (.getInt bb)))
-
-;;; writer
-
-(defn- bwriter
-  [^String  path]
-  (DataOutputStream. (FileOutputStream. (io/file path))))
-
-(defn- bwrite-integer
-  [wtr val]
-  (let [bb (gen-byte-buffer)]
-    (.putInt bb val)
-    (.write wtr (.array bb) 0 4)))
-
 ;;; public
 
 (defn bist-read
-  ([^String f]
-     (let [len (quot (file-size f) 4)]
-       (with-open [rdr (breader f)]
-         [0
-          len
-          (doall (map (fn [i]
-                        (bread-integer rdr))
-                      (range 0 len)))])))
-  ([^String f ^Integer start ^Integer end]
-     (let [len (quot (file-size f) 4)
-           left (validate-index start len)
-           right (validate-index end len)]
+  ([^String path]
+     (let [f (io/file path)]
+       (let [len (quot (file-size f) 4)]
+         [0 len (IOUtil/bistRead f)])))
+  ([^String path ^Integer start ^Integer end]
+     (let [f (io/file path)]
+       (let [len (quot (file-size f) 4)
+             left (validate-index start len)
+             right (validate-index end len)]
        (if (< left right)
-         (with-open [rdr (breader f)]
-           (skip rdr (* left 4))
-           [left
-            right
-            (doall (map (fn [i]
-                          (bread-integer rdr))
-                        (range left right)))])
-         [0 0 (list)]))))
+         [left right (IOUtil/bistReadWithRange f left right)]
+         [0 0 (int-array nil)])))))
 
 (defn bist-write
-  [^String f values]
-  (with-open [wtr (bwriter f)]
-    (doseq [v values] (bwrite-integer wtr v))))
+  [^String path ^"[I" values]
+  (IOUtil/bistWrite (io/file path) values))
 
 (defn values->content-length
-  [values]
-  (+ 16 (* 4 (count values))))
+  [^"[I" values]
+  (IOUtil/valuesToContentLength values))
 
 (defn values->content
-  [start end values]
-  (let [bb (gen-byte-buffer (values->content-length values))]
-    (.putLong bb start)
-    (.putLong bb end)
-    (doseq [v values]
-      (.putInt bb v))
-    (.array bb)))
+  [start end ^"[I" values]
+  (IOUtil/valuesToContent start end values))
 
 (defn byte-array->data
-  [bytes len]
-  (let [bb (doto (gen-byte-buffer len)
-             (.put bytes 0 len)
-             (.position 0))
-        data-len (quot len 4)]
-    (map (fn [_] (.getInt bb))
-         (range data-len))))
+  [^"[B" bs len]
+  (IOUtil/byteArrayToData bs len))
 
 (defn prepare-file
   [path]
@@ -154,16 +77,8 @@
 ;;; http
 
 (defn http-body->bytes
-  [input len]
-  (let [bb (gen-byte-buffer len)
-        data-size 4096
-        data (byte-array 4096)]
-    (loop [l (.read input data 0 data-size)]
-      (if (neg? l)
-        (.array bb)
-        (do
-          (.put bb data 0 l)
-          (recur (.read input data 0 data-size)))))))
+  [^InputStream input len]
+  (IOUtil/httpBodyToBytes input len))
 
 ;;; conversion utility
 
@@ -178,23 +93,22 @@
     (when-not (= ".hist" ext)
       (throw (Exception. (str "Invalid file extension: " ext))))
     (with-open [rdr (io/reader hist-path)]
-      (let [values (pmap (fn [l]
-                           (int (:val (read-string l))))
-                         (line-seq rdr))]
-        (with-open [wtr (bwriter bist-path)]
-          (doseq [v values] (bwrite-integer wtr v)))))
+      (let [values (int-array (pmap (fn [l]
+                                      (int (:val (read-string l))))
+                                    (line-seq rdr)))]
+        (bist-write bist-path values)))
     nil))
 
 (defn dir-hist->bist
   [dir-path]
   (let [dir (io/file dir-path)]
-    (doseq [f (file-seq dir)]
+    (doseq [^File f (file-seq dir)]
       (when (= ".hist" (re-find #"\.[0-9a-z]+$" (.getName f)))
         (hist->bist f)))))
 
 (defn reduce-values
-  [values]
-  (map (fn [v] (apply + v)) (partition-all 2 values)))
+  [^"[I" values]
+  (IOUtil/reduce values))
 
 (defn- gzip
   [^String s]
