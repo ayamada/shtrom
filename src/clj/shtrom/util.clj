@@ -3,8 +3,10 @@
            [clojure.string :as str]
            [cheshire.core :as cheshire])
   (:import [java.nio ByteBuffer ByteOrder]
-           [java.io DataInputStream DataOutputStream FileInputStream FileOutputStream
-            IOException EOFException ByteArrayInputStream ByteArrayOutputStream]
+           (java.io File InputStream DataInputStream DataOutputStream
+                    FileInputStream FileOutputStream
+                    ByteArrayInputStream ByteArrayOutputStream
+                    IOException EOFException)
            [java.util.zip GZIPOutputStream]))
 
 (defn- ^ByteBuffer gen-byte-buffer
@@ -44,7 +46,7 @@
 ;;; reader
 
 (defn- breader
-  [^String path]
+  ^DataInputStream [^String path]
   (DataInputStream. (FileInputStream. (io/file path))))
 
 (defn skip
@@ -82,11 +84,11 @@
 ;;; writer
 
 (defn- bwriter
-  [^String  path]
+  ^DataOutputStream [^String  path]
   (DataOutputStream. (FileOutputStream. (io/file path))))
 
 (defn- bwrite-integer
-  [wtr val]
+  [^DataOutputStream wtr val]
   (let [bb (gen-byte-buffer)]
     (.putInt bb val)
     (.write wtr (.array bb) 0 4)))
@@ -154,7 +156,7 @@
 ;;; http
 
 (defn http-body->bytes
-  [input len]
+  [^InputStream input len]
   (let [bb (gen-byte-buffer len)
         data-size 4096
         data (byte-array 4096)]
@@ -188,7 +190,7 @@
 (defn dir-hist->bist
   [dir-path]
   (let [dir (io/file dir-path)]
-    (doseq [f (file-seq dir)]
+    (doseq [^File f (file-seq dir)]
       (when (= ".hist" (re-find #"\.[0-9a-z]+$" (.getName f)))
         (hist->bist f)))))
 
