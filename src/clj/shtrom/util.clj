@@ -127,7 +127,7 @@
         (bwrite-integer wtr v)))))
 
 (defn values->content-length
-  [values]
+  [^"[I" values]
   (+ 16 (* 4 (alength values))))
 
 (defn values->content
