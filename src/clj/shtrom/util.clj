@@ -97,27 +97,22 @@
 ;;; public
 
 (defn bist-read
-  ([^String f]
-     (let [len (quot (file-size f) 4)]
-       (with-open [rdr (breader f)]
-         [0
-          len
-          (int-array (map (fn [i]
-                            (bread-integer rdr))
-                          (range 0 len)))])))
-  ([^String f ^Integer start ^Integer end]
-     (let [len (quot (file-size f) 4)
-           left (validate-index start len)
-           right (validate-index end len)]
+  ([^String path]
+     (let [f (io/file path)]
+       (when-not (.exists f)
+         (throw (java.io.FileNotFoundException.)))
+       (let [len (quot (file-size f) 4)]
+         [0 len (Util/bistRead f)])))
+  ([^String path ^Integer start ^Integer end]
+     (let [f (io/file path)]
+       (when-not (.exists f)
+         (throw (java.io.FileNotFoundException.)))
+       (let [len (quot (file-size f) 4)
+             left (validate-index start len)
+             right (validate-index end len)]
        (if (< left right)
-         (with-open [rdr (breader f)]
-           (skip rdr (* left 4))
-           [left
-            right
-            (int-array (map (fn [i]
-                              (bread-integer rdr))
-                            (range left right)))])
-         [0 0 (int-array nil)]))))
+         [left right (Util/bistReadWithRange f left right)]
+         [0 0 (int-array nil)])))))
 
 (defn bist-write
   [^String f ^"[I" values]
