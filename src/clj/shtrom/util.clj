@@ -141,13 +141,8 @@
     (.array bb)))
 
 (defn byte-array->data
-  [bytes len]
-  (let [bb (doto (gen-byte-buffer len)
-             (.put bytes 0 len)
-             (.position 0))
-        data-len (quot len 4)]
-    (int-array (map (fn [_] (.getInt bb))
-                    (range data-len)))))
+  [^"[B" bs len]
+  (Util/byteArrayToData bs len))
 
 (defn prepare-file
   [path]

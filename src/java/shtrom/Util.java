@@ -4,6 +4,7 @@ package shtrom;
 //import java.io.FileReader;
 //import java.io.RandomAccessFile;
 import java.io.InputStream;
+import java.io.IOException;
 //import java.util.Arrays;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -13,7 +14,7 @@ public class Util {
 		return ByteBuffer.allocate(size).order(ByteOrder.BIG_ENDIAN);
 	}
 
-	public static byte[] httpBodyToBytes (InputStream input, int len) throws Throwable {
+	public static byte[] httpBodyToBytes (InputStream input, int len) throws IOException {
 		ByteBuffer bb = genByteBuffer(len);
 		int bufSize = 4096;
 		byte[] buf = new byte[bufSize];
@@ -25,8 +26,19 @@ public class Util {
 		return bb.array();
 	}
 
+	public static int[] byteArrayToData (byte[] src, int len) {
+		ByteBuffer bb = genByteBuffer(len);
+		bb.put(src, 0, len);
+		bb.position(0);
+		int resultLength = len / 4;
+		int[] result = new int[resultLength];
+		for (int i = 0; i < resultLength; i++) {
+			result[i] = bb.getInt();
+		}
+		return result;
+	}
+
 	/* TODO:
-	 * - byte-array->data
 	 * - bist-read
 	 * - bist-write
 	 * - values->content
@@ -37,13 +49,11 @@ public class Util {
 		int srcSize = values.length;
 		int resultSize = (srcSize + 1) / 2;
 		int [] result = new int[resultSize];
-		int i = 0;
-		while (i < srcSize) {
+		for (int i = 0; i < srcSize; i = i + 2) {
 			int v1 = values[i];
 			int i2 = i + 1;
 			int v2 = (i2 < srcSize) ? values[i2] : 0;
 			result[i/2] = v1 + v2;
-			i = i + 2;
 		}
 		return result;
   }
