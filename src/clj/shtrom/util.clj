@@ -12,9 +12,9 @@
 
 (defn- ^ByteBuffer gen-byte-buffer
   ([]
-     (gen-byte-buffer 8))
+     (Util/genByteBuffer 8))
   ([size]
-     (.order (ByteBuffer/allocate size) ByteOrder/BIG_ENDIAN)))
+     (Util/genByteBuffer size)))
 
 (defn- validate-index
   [i len]
@@ -161,15 +161,7 @@
 
 (defn http-body->bytes
   [^InputStream input len]
-  (let [bb (gen-byte-buffer len)
-        data-size 4096
-        data (byte-array 4096)]
-    (loop [l (.read input data 0 data-size)]
-      (if (neg? l)
-        (.array bb)
-        (do
-          (.put bb data 0 l)
-          (recur (.read input data 0 data-size)))))))
+  (Util/httpBodyToBytes input len))
 
 ;;; conversion utility
 
