@@ -120,17 +120,11 @@
 
 (defn values->content-length
   [^"[I" values]
-  (+ 16 (* 4 (alength values))))
+  (Util/valuesToContentLength values))
 
 (defn values->content
   [start end ^"[I" values]
-  (let [bb (gen-byte-buffer (values->content-length values))]
-    (.putLong bb start)
-    (.putLong bb end)
-    (dotimes [i (alength values)]
-      (let [v (aget values i)]
-        (.putInt bb v)))
-    (.array bb)))
+  (Util/valuesToContent start end values))
 
 (defn byte-array->data
   [^"[B" bs len]

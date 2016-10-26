@@ -109,9 +109,22 @@ public class Util {
 			wtr.close();
 		}
 	}
-	/* TODO:
-	 * - values->content
-	 */
+
+	public static int valuesToContentLength (int[] values) {
+		return 16 + (4 * values.length);
+	}
+
+	public static byte[] valuesToContent (long start, long end, int[] values) {
+		int len = values.length;
+		int bbLen = valuesToContentLength(values);
+		ByteBuffer bb = genByteBuffer(bbLen);
+		bb.putLong(start);
+		bb.putLong(end);
+		for (int i = 0; i < len; i++) {
+			bb.putInt(values[i]);
+		}
+		return bb.array();
+	}
 
 	public static int[] reduce (int[] values) {
 		int srcSize = values.length;
