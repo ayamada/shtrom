@@ -115,11 +115,8 @@
          [0 0 (int-array nil)])))))
 
 (defn bist-write
-  [^String f ^"[I" values]
-  (with-open [wtr (bwriter f)]
-    (dotimes [i (alength values)]
-      (let [v (aget values i)]
-        (bwrite-integer wtr v)))))
+  [^String path ^"[I" values]
+  (Util/bistWrite (io/file path) values))
 
 (defn values->content-length
   [^"[I" values]

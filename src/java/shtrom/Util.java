@@ -3,7 +3,9 @@ package shtrom;
 import java.io.File;
 import java.io.InputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.EOFException;
 import java.nio.ByteBuffer;
@@ -54,7 +56,7 @@ public class Util {
 		bb.position(l);
 	}
 
-	private static int breadInteger (DataInputStream rdr) throws EOFException, IOException {
+	private static int bReadInteger (DataInputStream rdr) throws EOFException, IOException {
 		ByteBuffer bb = genByteBuffer(8);
 		readByteBuffer(rdr, bb, 4);
 		bb.flip();
@@ -65,10 +67,14 @@ public class Util {
 		int len = (int)(f.length() / 4);
 		int[] result = new int[len];
 		DataInputStream rdr = new DataInputStream(new FileInputStream(f));
-		for (int i = 0; i < len; i++) {
-			result[i] = breadInteger(rdr);
+		try {
+			for (int i = 0; i < len; i++) {
+				result[i] = bReadInteger(rdr);
+			}
 		}
-		rdr.close();
+		finally {
+			rdr.close();
+		}
 		return result;
 	}
 
@@ -77,20 +83,37 @@ public class Util {
 		if (right <= left) { return new int[0]; }
 		int[] result = new int[right - left];
 		DataInputStream rdr = new DataInputStream(new FileInputStream(f));
-		rdr.skipBytes(left * 4);
-		for (int i = 0; i < len; i++) {
-			result[i] = breadInteger(rdr);
+		try {
+			rdr.skipBytes(left * 4);
+			for (int i = 0; i < len; i++) {
+				result[i] = bReadInteger(rdr);
+			}
 		}
-		rdr.close();
+		finally {
+			rdr.close();
+		}
 		return result;
 	}
 
+	public static void bistWrite (File f, int[] values) throws IOException {
+		DataOutputStream wtr = new DataOutputStream(new FileOutputStream(f));
+		int len = values.length;
+		try {
+			for (int i = 0; i < len; i++) {
+				ByteBuffer bb = genByteBuffer(8);
+				bb.putInt(values[i]);
+				wtr.write(bb.array(), 0, 4);
+			}
+		}
+		finally {
+			wtr.close();
+		}
+	}
 	/* TODO:
-	 * - bist-write
 	 * - values->content
 	 */
 
-  public static int[] reduce (int[] values) {
+	public static int[] reduce (int[] values) {
 		int srcSize = values.length;
 		int resultSize = (srcSize + 1) / 2;
 		int [] result = new int[resultSize];
