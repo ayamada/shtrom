@@ -43,14 +43,10 @@
 (defn bist-read
   ([^String path]
      (let [f (io/file path)]
-       (when-not (.exists f)
-         (throw (java.io.FileNotFoundException.)))
        (let [len (quot (file-size f) 4)]
          [0 len (Util/bistRead f)])))
   ([^String path ^Integer start ^Integer end]
      (let [f (io/file path)]
-       (when-not (.exists f)
-         (throw (java.io.FileNotFoundException.)))
        (let [len (quot (file-size f) 4)
              left (validate-index start len)
              right (validate-index end len)]
