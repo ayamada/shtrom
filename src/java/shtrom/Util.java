@@ -79,9 +79,9 @@ public class Util {
 	}
 
 	public static int[] bistReadWithRange (File f, int left, int right) throws IOException {
-		int len = (int)(f.length() / 4);
 		if (right <= left) { return new int[0]; }
-		int[] result = new int[right - left];
+		int len = right - left;
+		int[] result = new int[len];
 		DataInputStream rdr = new DataInputStream(new FileInputStream(f));
 		try {
 			rdr.skipBytes(left * 4);
