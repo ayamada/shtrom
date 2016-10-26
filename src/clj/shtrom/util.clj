@@ -10,12 +10,6 @@
            [java.util.zip GZIPOutputStream]
            [shtrom Util]))
 
-(defn- ^ByteBuffer gen-byte-buffer
-  ([]
-     (Util/genByteBuffer 8))
-  ([size]
-     (Util/genByteBuffer size)))
-
 (defn- validate-index
   [i len]
   (cond
@@ -43,56 +37,6 @@
     (when-not (.exists f)
       (throw (java.io.FileNotFoundException.)))
     (.length f)))
-
-;;; reader
-
-(defn- breader
-  ^DataInputStream [^String path]
-  (DataInputStream. (FileInputStream. (io/file path))))
-
-(defn skip
-  [^DataInputStream rdr ^Integer n]
-  (.skipBytes rdr n)
-  nil)
-
-(defn- read-bytes
-  ([^DataInputStream rdr ^Integer l]
-     (let [ba (byte-array l)]
-       (.read rdr ba 0 l)
-       ba))
-  ([^DataInputStream rdr buffer offset ^Integer l]
-     (loop [total-read 0]
-       (when (< total-read l)
-         (let [n (.read rdr buffer (+ offset total-read) (- l total-read))]
-           (if (neg? n)
-             (throw (EOFException. "Premature EOF"))
-             (recur (+ total-read n))))))))
-
-(defn- read-byte-buffer
-  [^DataInputStream rdr ^ByteBuffer bb l]
-  {:pre (< l (.capacity bb))}
-  (read-bytes rdr (.array bb) 0 l)
-  (.limit bb (.capacity bb))
-  (.position bb l))
-
-(defn- bread-integer
-  [rdr]
-  (let [bb (gen-byte-buffer)]
-    (read-byte-buffer rdr bb 4)
-    (.flip bb)
-    (.getInt bb)))
-
-;;; writer
-
-(defn- bwriter
-  ^DataOutputStream [^String  path]
-  (DataOutputStream. (FileOutputStream. (io/file path))))
-
-(defn- bwrite-integer
-  [^DataOutputStream wtr val]
-  (let [bb (gen-byte-buffer)]
-    (.putInt bb val)
-    (.write wtr (.array bb) 0 4)))
 
 ;;; public
 
