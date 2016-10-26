@@ -157,11 +157,10 @@
     (when-not (= ".hist" ext)
       (throw (Exception. (str "Invalid file extension: " ext))))
     (with-open [rdr (io/reader hist-path)]
-      (let [values (pmap (fn [l]
-                           (int (:val (read-string l))))
-                         (line-seq rdr))]
-        (with-open [wtr (bwriter bist-path)]
-          (doseq [v values] (bwrite-integer wtr v)))))
+      (let [values (int-array (pmap (fn [l]
+                                      (int (:val (read-string l))))
+                                    (line-seq rdr)))]
+        (bist-write bist-path values)))
     nil))
 
 (defn dir-hist->bist
