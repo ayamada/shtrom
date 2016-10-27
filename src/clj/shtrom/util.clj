@@ -2,12 +2,7 @@
   (require [clojure.java.io :as io]
            [clojure.string :as str]
            [cheshire.core :as cheshire])
-  (:import [java.nio ByteBuffer ByteOrder]
-           (java.io File InputStream DataInputStream DataOutputStream
-                    FileInputStream FileOutputStream
-                    ByteArrayInputStream ByteArrayOutputStream
-                    IOException EOFException)
-           [java.util.zip GZIPOutputStream]
+  (:import [java.io File InputStream ByteArrayInputStream ByteArrayOutputStream]
            [shtrom Util]))
 
 (defn- validate-index
