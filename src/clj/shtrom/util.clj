@@ -3,7 +3,8 @@
            [clojure.string :as str]
            [cheshire.core :as cheshire])
   (:import [java.io File InputStream ByteArrayInputStream ByteArrayOutputStream]
-           [shtrom Util]))
+           [java.util.zip GZIPOutputStream]
+           [shtrom.util IOUtil]))
 
 (defn- validate-index
   [i len]
@@ -39,31 +40,31 @@
   ([^String path]
      (let [f (io/file path)]
        (let [len (quot (file-size f) 4)]
-         [0 len (Util/bistRead f)])))
+         [0 len (IOUtil/bistRead f)])))
   ([^String path ^Integer start ^Integer end]
      (let [f (io/file path)]
        (let [len (quot (file-size f) 4)
              left (validate-index start len)
              right (validate-index end len)]
        (if (< left right)
-         [left right (Util/bistReadWithRange f left right)]
+         [left right (IOUtil/bistReadWithRange f left right)]
          [0 0 (int-array nil)])))))
 
 (defn bist-write
   [^String path ^"[I" values]
-  (Util/bistWrite (io/file path) values))
+  (IOUtil/bistWrite (io/file path) values))
 
 (defn values->content-length
   [^"[I" values]
-  (Util/valuesToContentLength values))
+  (IOUtil/valuesToContentLength values))
 
 (defn values->content
   [start end ^"[I" values]
-  (Util/valuesToContent start end values))
+  (IOUtil/valuesToContent start end values))
 
 (defn byte-array->data
   [^"[B" bs len]
-  (Util/byteArrayToData bs len))
+  (IOUtil/byteArrayToData bs len))
 
 (defn prepare-file
   [path]
@@ -77,7 +78,7 @@
 
 (defn http-body->bytes
   [^InputStream input len]
-  (Util/httpBodyToBytes input len))
+  (IOUtil/httpBodyToBytes input len))
 
 ;;; conversion utility
 
@@ -107,7 +108,7 @@
 
 (defn reduce-values
   [^"[I" values]
-  (Util/reduce values))
+  (IOUtil/reduce values))
 
 (defn- gzip
   [^String s]

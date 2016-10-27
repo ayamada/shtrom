@@ -1,4 +1,4 @@
-package shtrom;
+package shtrom.util;
 
 import java.io.File;
 import java.io.InputStream;
@@ -11,7 +11,7 @@ import java.io.EOFException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class Util {
+public class IOUtil {
 	public static ByteBuffer genByteBuffer (int size) {
 		return ByteBuffer.allocate(size).order(ByteOrder.BIG_ENDIAN);
 	}
