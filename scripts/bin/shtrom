@@ -1,5 +1,5 @@
 #!/bin/sh
 
-export CLASSPATH=/var/lib/shtrom/config:/var/lib/shtrom/shtrom.jar
+export CLASSPATH=/usr/share/shtrom/config:/usr/share/shtrom/shtrom.jar
 
 exec java -server shtrom.handler
