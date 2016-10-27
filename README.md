@@ -1,6 +1,6 @@
 # shtrom
 
-Fast data storage for depth and coverage of genome
+Shtrom is a coverage(or depth) data store in DNA sequencing.
 
 [![Build Status](https://travis-ci.org/chrovis/shtrom.svg?branch=master)](https://travis-ci.org/chrovis/shtrom)
 

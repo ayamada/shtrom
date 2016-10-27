@@ -5,12 +5,11 @@
 # Required-Stop:     $local_fs $network $remote_fs $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Fast data storage
-# Description:       Shtrom is a fast data storage for depth and
-#                    coverage of genome.
+# Short-Description: Sequencing coverage data store
+# Description:       Shtrom is a coverage(or depth) data store in DNA sequencing
 ### END INIT INFO
 
-# Author: Xcoo, Inc. <infrastructure@xcoo.jp>
+# Author: Xcoo, Inc. <developer@chrov.is>
 
 # Do NOT "set -e"
 
