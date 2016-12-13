@@ -11,6 +11,7 @@
             [shtrom.cache :as cache]
             [shtrom.data :as data]
             [shtrom.error :as error])
+  (:import [shtrom GzipStore])
   (:gen-class))
 
 (defn- log-time-middleware [handler]
@@ -69,8 +70,13 @@
   (config/load-config)
   (cache/prepare-cache!))
 
+(defn term
+  []
+  (GzipStore/deleteAllForce))
+
 (defn -main
   []
   (init)
+  (.addShutdownHook (Runtime/getRuntime) (Thread. ^Runnable term))
   (let [port (or config/port 3001)]
     (jetty/run-jetty #'app {:port port :join? false})))
