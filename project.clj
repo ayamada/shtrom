@@ -37,6 +37,7 @@
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}
   :ring {:handler shtrom.handler/app
          :init shtrom.handler/init
+         :destroy shtrom.handler/term
          :port 3001
          :war-exclusions [#".+?\.config\.clj"
                           #"log4j\.properties"]})
