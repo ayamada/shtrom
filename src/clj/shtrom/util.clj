@@ -1,9 +1,10 @@
 (ns shtrom.util
-  (require [clojure.java.io :as io]
-           [clojure.string :as str]
-           [cheshire.core :as cheshire])
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [cheshire.core :as cheshire])
   (:import [java.io File InputStream ByteArrayInputStream ByteArrayOutputStream]
            [java.util.zip GZIPOutputStream]
+           [shtrom BistReader BistWriter]
            [shtrom.util IOUtil]))
 
 (defn- validate-index
@@ -38,21 +39,23 @@
 
 (defn bist-read
   ([^String path]
-     (let [f (io/file path)]
-       (let [len (quot (file-size f) 4)]
-         [0 len (IOUtil/bistRead f)])))
+     (with-open [br (BistReader. path)]
+       (let [len (.length br)
+             data (.read br)]
+         [0 len data])))
   ([^String path ^Integer start ^Integer end]
-     (let [f (io/file path)]
-       (let [len (quot (file-size f) 4)
+     (with-open [br (BistReader. path)]
+       (let [len (.length br)
              left (validate-index start len)
              right (validate-index end len)]
-       (if (< left right)
-         [left right (IOUtil/bistReadWithRange f left right)]
-         [0 0 (int-array nil)])))))
+         (if (< left right)
+           [left right (.readWithRange br left right)]
+           [0 0 (int-array nil)])))))
 
 (defn bist-write
   [^String path ^"[I" values]
-  (IOUtil/bistWrite (io/file path) values))
+  (with-open [bw (BistWriter. path)]
+    (.writeGzip bw values)))
 
 (defn values->content-length
   [^"[I" values]
