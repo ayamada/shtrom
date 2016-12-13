@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.io.EOFException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+import java.io.BufferedOutputStream;
 
 public class IOUtil {
     public static ByteBuffer genByteBuffer (int size) {
@@ -63,6 +66,23 @@ public class IOUtil {
         return bb.getInt();
     }
 
+    public static void bistGunzip (String gzPath, String resultPath) throws IOException {
+        GZIPInputStream gis = new GZIPInputStream(new FileInputStream(new File(gzPath)));
+        BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(new File(resultPath)));
+        byte[] buf = new byte[1024];
+        try {
+            while (true) {
+                int len = gis.read(buf);
+                if (len <= 0) { break; }
+                os.write(buf, 0, len);
+            }
+        }
+        finally {
+            gis.close();
+            os.close();
+        }
+    }
+
     public static int[] bistRead (File f) throws IOException {
         int len = (int)(f.length() / 4);
         int[] result = new int[len];
@@ -95,18 +115,20 @@ public class IOUtil {
         return result;
     }
 
-    public static void bistWrite (File f, int[] values) throws IOException {
-        DataOutputStream wtr = new DataOutputStream(new FileOutputStream(f));
+    public static void bistWrite (String path, int[] values) throws IOException {
+        File f = new File(path + ".gz");
+        FileOutputStream fos = new FileOutputStream(f);
+        GZIPOutputStream gzos = new GZIPOutputStream(fos);
         int len = values.length;
         try {
             for (int i = 0; i < len; i++) {
                 ByteBuffer bb = genByteBuffer(8);
                 bb.putInt(values[i]);
-                wtr.write(bb.array(), 0, 4);
+                gzos.write(bb.array(), 0, 4);
             }
         }
         finally {
-            wtr.close();
+            gzos.close();
         }
     }
 

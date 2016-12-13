@@ -25,6 +25,7 @@
 (defn- clean-histfile! []
   (util/delete-if-exists (in-test-dir "dummy.hist"))
   (util/delete-if-exists (in-test-dir "dummy.bist"))
+  (util/delete-if-exists (in-test-dir "dummy.bist.gz"))
   (util/delete-if-exists (in-test-dir "dummy.txt"))
   (util/delete-if-exists t-fixture/test-dir))
 
@@ -32,6 +33,6 @@
                      (after :facts (clean-histfile!))]
   (fact "hist->bist"
     (util/hist->bist (in-test-dir "dummy.txt")) => (throws Exception)
-    (.exists (io/file (in-test-dir "dummy.bist"))) => falsey
+    (.exists (io/file (in-test-dir "dummy.bist.gz"))) => falsey
     (util/dir-hist->bist t-fixture/test-dir) => anything
-    (.exists (io/file (in-test-dir "dummy.bist"))) => truthy))
+    (.exists (io/file (in-test-dir "dummy.bist.gz"))) => truthy))

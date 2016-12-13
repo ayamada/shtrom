@@ -34,14 +34,20 @@
       (throw (java.io.FileNotFoundException.)))
     (.length f)))
 
+(defn bist-gunzip! [path]
+  (when-not (.exists (io/file path))
+    (IOUtil/bistGunzip (str path ".gz") path)))
+
 ;;; public
 
 (defn bist-read
   ([^String path]
+     (bist-gunzip! path)
      (let [f (io/file path)]
        (let [len (quot (file-size f) 4)]
          [0 len (IOUtil/bistRead f)])))
   ([^String path ^Integer start ^Integer end]
+     (bist-gunzip! path)
      (let [f (io/file path)]
        (let [len (quot (file-size f) 4)
              left (validate-index start len)
@@ -52,7 +58,7 @@
 
 (defn bist-write
   [^String path ^"[I" values]
-  (IOUtil/bistWrite (io/file path) values))
+  (IOUtil/bistWrite path values))
 
 (defn values->content-length
   [^"[I" values]
