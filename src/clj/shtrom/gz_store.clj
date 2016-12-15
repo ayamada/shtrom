@@ -4,6 +4,7 @@
 
 ;;; TODO: Support to delete older entries by TTL (using another thread)
 ;;; TODO: プロセス終了時に delete-all-cache-entries! を呼ぶようにする
+;;; TODO: bistの更新処理自体もこのモジュールに移動させる(gz絡みの処理がある為)
 
 (defn- gz-path [path]
   (str path ".gz"))
@@ -18,10 +19,13 @@
 
 (defonce cache-table (atom {}))
 
-(defn delete-cache-entry! [path]
+(defn delete-cache-entry! [path & [hook]]
+  ;; NB: bistの更新時は明示的にこの関数を呼び、既存のエントリを消す必要がある
   ;; NB: エントリを消すと同時に *.bist ファイルも消す必要がある
   (swap! cache-table
          (fn [old-table]
+           (when hook
+             (hook))
            ;; NB: 「*.bist は存在するが *.bist.gz が存在しない」ケースにも
            ;;     対応する必要がある(単に *.bist を消さずに残すだけでよい)
            (when (.exists (io/file (gz-path path)))
