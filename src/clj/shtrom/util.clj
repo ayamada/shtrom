@@ -1,7 +1,8 @@
 (ns shtrom.util
-  (require [clojure.java.io :as io]
-           [clojure.string :as str]
-           [cheshire.core :as cheshire])
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [cheshire.core :as cheshire]
+            [shtrom.gz-store :as gz-store])
   (:import [java.io File InputStream ByteArrayInputStream ByteArrayOutputStream]
            [java.util.zip GZIPOutputStream]
            [shtrom.util IOUtil]))
@@ -34,20 +35,16 @@
       (throw (java.io.FileNotFoundException.)))
     (.length f)))
 
-(defn bist-gunzip! [path]
-  (when-not (.exists (io/file path))
-    (IOUtil/bistGunzip (str path ".gz") path)))
-
 ;;; public
 
 (defn bist-read
   ([^String path]
-     (bist-gunzip! path)
+     (gz-store/gunzip-bist! path)
      (let [f (io/file path)]
        (let [len (quot (file-size f) 4)]
          [0 len (IOUtil/bistRead f)])))
   ([^String path ^Integer start ^Integer end]
-     (bist-gunzip! path)
+     (gz-store/gunzip-bist! path)
      (let [f (io/file path)]
        (let [len (quot (file-size f) 4)
              left (validate-index start len)
@@ -58,7 +55,8 @@
 
 (defn bist-write
   [^String path ^"[I" values]
-  (IOUtil/bistWrite path values))
+  (IOUtil/bistWrite path values)
+  (gz-store/delete-cache-entry! path))
 
 (defn values->content-length
   [^"[I" values]
