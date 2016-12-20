@@ -77,6 +77,6 @@
 (defn -main
   []
   (init)
-  (.addShutdownHook (Runtime/getRuntime) (Thread. term))
+  (.addShutdownHook (Runtime/getRuntime) (Thread. ^Runnable term))
   (let [port (or config/port 3001)]
     (jetty/run-jetty #'app {:port port :join? false})))

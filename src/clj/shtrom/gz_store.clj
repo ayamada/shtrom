@@ -16,8 +16,13 @@
 ;;;   (ただし例外として ".gz" つきファイルが存在しないものについては、
 ;;;   以前のバージョンからのbackward compatibilityの為、削除せずに残す)
 
-;;; TODO: Support to delete older entries by TTL (using another thread)
 ;;; TODO: bistの更新処理自体もこのモジュールに移動させる(gz絡みの処理がある為)
+;;;       具体的には shtrom.util/bist-write 内の IOUtil/bistWrite 。
+;;;       (この中でgz圧縮しているが、コードがclj側とjava側に分離していて
+;;;       非常に分かりづらく、また扱いづらい)
+
+;;; TODO: あとで外部設定可能にする事
+(def ttl-msec (* 1 60 60 1000))
 
 (defn- gz-path [path]
   (str path ".gz"))
@@ -51,6 +56,16 @@
   (doseq [k (keys @cache-table)]
     (delete-cache-entry! k)))
 
+(defn gc! []
+  ;; cache-tableのファイルを調べ、ttlを越えているものがあればエントリを消す
+  ;; TODO
+  nil)
+
+(defn touch-cache! [path]
+  ;; 指定したpathのタイムスタンプを更新する
+  ;; TODO
+  nil)
+
 (defn gunzip-bist! [path]
   (swap! cache-table
          (fn [old-table]
@@ -61,4 +76,6 @@
                old-table)
              (let [entry {:timestamp (System/currentTimeMillis)}]
                (gunzip! path)
-               (assoc old-table path entry))))))
+               (assoc old-table path entry)))))
+  (touch-cache! path)
+  (gc!))

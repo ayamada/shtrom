@@ -55,7 +55,8 @@
 
 (defn bist-write
   [^String path ^"[I" values]
-  (gz-store/delete-cache-entry! path #(IOUtil/bistWrite path values)))
+  (gz-store/delete-cache-entry! path #(IOUtil/bistWrite path values))
+  (gz-store/gc!))
 
 (defn values->content-length
   [^"[I" values]
