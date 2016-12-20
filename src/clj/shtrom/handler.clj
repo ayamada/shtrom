@@ -10,6 +10,7 @@
             [shtrom.config :as config]
             [shtrom.cache :as cache]
             [shtrom.data :as data]
+            [shtrom.gz-store :as gz-store]
             [shtrom.error :as error])
   (:gen-class))
 
@@ -69,8 +70,13 @@
   (config/load-config)
   (cache/prepare-cache!))
 
+(defn term
+  []
+  (gz-store/delete-all-cache-entries!))
+
 (defn -main
   []
   (init)
+  (.addShutdownHook (Runtime/getRuntime) (Thread. term))
   (let [port (or config/port 3001)]
     (jetty/run-jetty #'app {:port port :join? false})))

@@ -2,8 +2,21 @@
   (:require [clojure.java.io :as io])
   (:import [shtrom.util IOUtil]))
 
+;;; bistファイルをgzip圧縮して扱うモジュール
+;;; 以下のルールでgzip圧縮/展開を行う
+;;; - bist-read時に、指定されたファイルが存在すれば、そこから読む。
+;;;   もし存在しない場合は、末尾に ".gz" をつけたファイルから
+;;;   指定されたファイルへとgzip展開を行い、そこから読む。
+;;; - bist-write時は、末尾に ".gz" をつけたファイルへと
+;;;   gzip圧縮した状態で書き出す。
+;;;   またこの際に ".gz" なしの古いファイルが存在する場合、
+;;;   そのファイルは削除する。
+;;; - bist-read / bist-write の実行時およびサーバプロセスの終了時に、
+;;;   一定時間アクセスのない ".gz" なしファイルは削除する。
+;;;   (ただし例外として ".gz" つきファイルが存在しないものについては、
+;;;   以前のバージョンからのbackward compatibilityの為、削除せずに残す)
+
 ;;; TODO: Support to delete older entries by TTL (using another thread)
-;;; TODO: プロセス終了時に delete-all-cache-entries! を呼ぶようにする
 ;;; TODO: bistの更新処理自体もこのモジュールに移動させる(gz絡みの処理がある為)
 
 (defn- gz-path [path]
@@ -28,9 +41,10 @@
              (hook))
            ;; NB: 「*.bist は存在するが *.bist.gz が存在しない」ケースにも
            ;;     対応する必要がある(単に *.bist を消さずに残すだけでよい)
-           (when (.exists (io/file (gz-path path)))
-             (when (.exists (io/file path))
-               (io/delete-file path true)))
+           (when (and
+                   (.exists (io/file (gz-path path)))
+                   (.exists (io/file path)))
+             (io/delete-file path true))
            (dissoc old-table path))))
 
 (defn delete-all-cache-entries! []
