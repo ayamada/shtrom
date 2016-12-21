@@ -11,13 +11,16 @@
 ;;;   gzip圧縮した状態で書き出す。
 ;;;   またこの際に ".gz" なしの古いファイルが存在する場合、
 ;;;   そのファイルは削除する。
-;;; - bist-read / bist-write の実行時およびサーバプロセスの終了時に、
+;;; - bist-read / bist-write の実行時およびringサーバの終了時に、
 ;;;   一定時間アクセスのない ".gz" なしファイルは削除する。
 ;;;   (ただし例外として ".gz" つきファイルが存在しないものについては、
 ;;;   以前のバージョンからのbackward compatibilityの為、削除せずに残す)
+;;;   当初は「別スレッドで定期的に削除する」としていたが、
+;;;   処理が十分に軽いので、bist-read / bist-write の実行時に行う事にした。
 
 ;;; TODO: あとで外部設定可能にする事
 (def ttl-msec (* 1 60 60 1000))
+(def ttl-check-threshold-msec 1000)
 
 (defn- gz-path [path]
   (str path ".gz"))
@@ -32,6 +35,7 @@
 
 ;;; NB: このテーブルはmutexも兼ねている
 (defonce ^:private cache-table (atom {}))
+(defonce last-gc-run-timestamp (atom 0))
 
 (defn- delete-gunzip-file! [path]
   ;; NB: 「*.bist は存在するが *.bist.gz が存在しない」ケースにも
@@ -58,11 +62,13 @@
     (delete-cache-entry! k)))
 
 (defn gc! []
-  ;; cache-tableのファイルを調べ、ttlを越えているものがあればエントリを消す
   (let [now (System/currentTimeMillis)]
-    (doseq [[path entry] (doall @cache-table)]
-      (when (< (+ (:timestamp entry) ttl-msec) now)
-        (delete-cache-entry! path)))))
+    (when (< (+ @last-gc-run-timestamp ttl-check-threshold-msec) now)
+      (reset! last-gc-run-timestamp now)
+      ;; cache-tableのファイルを調べ、ttlを越えているものがあればエントリを消す
+      (doseq [[path entry] (doall @cache-table)]
+        (when (< (+ (:timestamp entry) ttl-msec) now)
+          (delete-cache-entry! path))))))
 
 (defn touch-cache! [path]
   ;; 指定したpathのタイムスタンプを更新する
