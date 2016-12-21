@@ -66,6 +66,9 @@ public class IOUtil {
         return bb.getInt();
     }
 
+    // TODO: このgzip展開に、gzip圧縮時の三倍程度の時間がかかっている。
+    //       そんな時間はかからない(普通は圧縮時の方が時間がかかる)と思うので、
+    //       もっと効率を良くできないか、あとで調査する。
     public static void bistGunzip (String gzPath, String resultPath) throws IOException {
         GZIPInputStream gis = new GZIPInputStream(new FileInputStream(new File(gzPath)));
         BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(new File(resultPath)));
