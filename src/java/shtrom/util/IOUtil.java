@@ -118,8 +118,8 @@ public class IOUtil {
         return result;
     }
 
-    public static void bistWrite (String path, int[] values) throws IOException {
-        File f = new File(path + ".gz");
+    public static void bistWriteGzip (String path, int[] values) throws IOException {
+        File f = new File(path);
         FileOutputStream fos = new FileOutputStream(f);
         GZIPOutputStream gzos = new GZIPOutputStream(fos);
         int len = values.length;

@@ -16,11 +16,6 @@
 ;;;   (ただし例外として ".gz" つきファイルが存在しないものについては、
 ;;;   以前のバージョンからのbackward compatibilityの為、削除せずに残す)
 
-;;; TODO: bistの更新処理自体もこのモジュールに移動させる(gz絡みの処理がある為)
-;;;       具体的には shtrom.util/bist-write 内の IOUtil/bistWrite 。
-;;;       (この中でgz圧縮しているが、コードがclj側とjava側に分離していて
-;;;       非常に分かりづらく、また扱いづらい)
-
 ;;; TODO: あとで外部設定可能にする事
 (def ttl-msec (* 1 60 60 1000))
 
@@ -35,7 +30,18 @@
   (when (.exists (io/file (gz-path bist-path)))
     (IOUtil/bistGunzip (gz-path bist-path) bist-path)))
 
-(defonce cache-table (atom {}))
+;;; NB: このテーブルはmutexも兼ねている
+(defonce ^:private cache-table (atom {}))
+
+(defn- delete-gunzip-file! [path]
+  ;; NB: 「*.bist は存在するが *.bist.gz が存在しない」ケースにも
+  ;;     対応する必要がある(単に *.bist を消さずに残すだけでよい)。
+  ;;     言い変えると「*.bistも*.bist.gzも存在している時のみ、*.bistを消す」
+  ;;     となる
+  (when (and
+          (.exists (io/file (gz-path path)))
+          (.exists (io/file path)))
+    (io/delete-file path true)))
 
 (defn delete-cache-entry! [path & [hook]]
   ;; NB: bistの更新時は明示的にこの関数を呼び、既存のエントリを消す必要がある
@@ -44,12 +50,7 @@
          (fn [old-table]
            (when hook
              (hook))
-           ;; NB: 「*.bist は存在するが *.bist.gz が存在しない」ケースにも
-           ;;     対応する必要がある(単に *.bist を消さずに残すだけでよい)
-           (when (and
-                   (.exists (io/file (gz-path path)))
-                   (.exists (io/file path)))
-             (io/delete-file path true))
+           (delete-gunzip-file! path)
            (dissoc old-table path))))
 
 (defn delete-all-cache-entries! []
@@ -58,13 +59,18 @@
 
 (defn gc! []
   ;; cache-tableのファイルを調べ、ttlを越えているものがあればエントリを消す
-  ;; TODO
-  nil)
+  (let [now (System/currentTimeMillis)]
+    (doseq [[path entry] (doall @cache-table)]
+      (when (< (+ (:timestamp entry) ttl-msec) now)
+        (delete-cache-entry! path)))))
 
 (defn touch-cache! [path]
   ;; 指定したpathのタイムスタンプを更新する
-  ;; TODO
-  nil)
+  (swap! cache-table
+         (fn [old-table]
+           (if (get old-table path)
+             (assoc-in old-table [path :timestamp] (System/currentTimeMillis))
+             old-table))))
 
 (defn gunzip-bist! [path]
   (swap! cache-table
@@ -79,3 +85,8 @@
                (assoc old-table path entry)))))
   (touch-cache! path)
   (gc!))
+
+(defn gzip-bist! [^String path ^"[I" values]
+  (delete-cache-entry! path #(IOUtil/bistWriteGzip (str path ".gz") values))
+  (gc!))
+
