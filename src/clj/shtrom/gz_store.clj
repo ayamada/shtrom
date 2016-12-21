@@ -44,8 +44,8 @@
     (io/delete-file path true)))
 
 (defn delete-cache-entry! [path & [hook]]
-  ;; NB: bistの更新時は明示的にこの関数を呼び、既存のエントリを消す必要がある
-  ;; NB: エントリを消すと同時に *.bist ファイルも消す必要がある
+  ;; NB: bistの更新時は明示的にこの関数を呼び、既存のエントリを消す必要がある。
+  ;;     また、エントリを消すと同時に *.bist ファイルも消す必要がある
   (swap! cache-table
          (fn [old-table]
            (when hook
