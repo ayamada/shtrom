@@ -43,29 +43,6 @@ public class IOUtil {
         return result;
     }
 
-    private static void readBytes (DataInputStream rdr, byte[] buf, int offset, int l) throws EOFException, IOException {
-        int totalRead = 0;
-        while (totalRead < l) {
-            int n = rdr.read(buf, offset + totalRead, l - totalRead);
-            if (n < 0) { throw new EOFException("Premature EOF"); }
-            totalRead += n;
-        }
-    }
-
-    private static void readByteBuffer (DataInputStream rdr, ByteBuffer bb, int l) throws EOFException, IOException {
-        int cap = bb.capacity();
-        readBytes(rdr, bb.array(), 0, l);
-        bb.limit(cap);
-        bb.position(l);
-    }
-
-    private static int bReadInteger (DataInputStream rdr) throws EOFException, IOException {
-        ByteBuffer bb = genByteBuffer(8);
-        readByteBuffer(rdr, bb, 4);
-        bb.flip();
-        return bb.getInt();
-    }
-
     // TODO: このgzip展開に、gzip圧縮時の三倍程度の時間がかかっている。
     //       そんな時間はかからない(普通は圧縮時の方が時間がかかる)と思うので、
     //       もっと効率を良くできないか、あとで調査する。
@@ -84,38 +61,6 @@ public class IOUtil {
             gis.close();
             os.close();
         }
-    }
-
-    public static int[] bistRead (File f) throws IOException {
-        int len = (int)(f.length() / 4);
-        int[] result = new int[len];
-        DataInputStream rdr = new DataInputStream(new FileInputStream(f));
-        try {
-            for (int i = 0; i < len; i++) {
-                result[i] = bReadInteger(rdr);
-            }
-        }
-        finally {
-            rdr.close();
-        }
-        return result;
-    }
-
-    public static int[] bistReadWithRange (File f, int left, int right) throws IOException {
-        if (right <= left) { return new int[0]; }
-        int len = right - left;
-        int[] result = new int[len];
-        DataInputStream rdr = new DataInputStream(new FileInputStream(f));
-        try {
-            rdr.skipBytes(left * 4);
-            for (int i = 0; i < len; i++) {
-                result[i] = bReadInteger(rdr);
-            }
-        }
-        finally {
-            rdr.close();
-        }
-        return result;
     }
 
     public static void bistWriteGzip (String path, int[] values) throws IOException {
