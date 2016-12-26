@@ -63,23 +63,6 @@ public class IOUtil {
         }
     }
 
-    public static void bistWriteGzip (String path, int[] values) throws IOException {
-        File f = new File(path);
-        FileOutputStream fos = new FileOutputStream(f);
-        GZIPOutputStream gzos = new GZIPOutputStream(fos);
-        int len = values.length;
-        try {
-            for (int i = 0; i < len; i++) {
-                ByteBuffer bb = genByteBuffer(8);
-                bb.putInt(values[i]);
-                gzos.write(bb.array(), 0, 4);
-            }
-        }
-        finally {
-            gzos.close();
-        }
-    }
-
     public static int valuesToContentLength (int[] values) {
         return 16 + (4 * values.length);
     }

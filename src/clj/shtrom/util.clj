@@ -5,7 +5,7 @@
             [shtrom.gz-store :as gz-store])
   (:import [java.io File InputStream ByteArrayInputStream ByteArrayOutputStream]
            [java.util.zip GZIPOutputStream]
-           [shtrom BistReader BistWriter]
+           [shtrom BistReader]
            [shtrom.util IOUtil]))
 
 (defn- validate-index

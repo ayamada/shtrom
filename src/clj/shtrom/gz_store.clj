@@ -1,6 +1,7 @@
 (ns shtrom.gz-store
   (:require [clojure.java.io :as io])
-  (:import [shtrom.util IOUtil]))
+  (:import [shtrom.util IOUtil]
+           [shtrom BistWriter]))
 
 ;;; bistファイルをgzip圧縮して扱うモジュール
 ;;; 以下のルールでgzip圧縮/展開を行う
@@ -93,6 +94,9 @@
   (gc!))
 
 (defn gzip-bist! [^String path ^"[I" values]
-  (delete-cache-entry! path #(IOUtil/bistWriteGzip (str path ".gz") values))
+  (let [gz-path (str path ".gz")
+        updater #(with-open [bw (BistWriter. gz-path)]
+                   (.writeGzip bw values))]
+    (delete-cache-entry! path updater))
   (gc!))
 
