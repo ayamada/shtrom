@@ -5,7 +5,7 @@
             [shtrom.gz-store :as gz-store])
   (:import [java.io File InputStream ByteArrayInputStream ByteArrayOutputStream]
            [java.util.zip GZIPOutputStream]
-           [shtrom BistReader #_BistWriter]
+           [shtrom BistReader BistWriter]
            [shtrom.util IOUtil]))
 
 (defn- validate-index
@@ -41,20 +41,20 @@
 (defn bist-read
   ([^String path]
      (gz-store/gunzip-bist! path)
-     (let [f (io/file path)]
-       (let [len (quot (file-size f) 4)
-             br (BistReader. path)]
+     (let [f (io/file path)
+           len (quot (file-size f) 4)]
+       (with-open [br (BistReader. path)]
          [0 len (.read br)])))
   ([^String path ^Integer start ^Integer end]
      (gz-store/gunzip-bist! path)
-     (let [f (io/file path)]
-       (let [len (quot (file-size f) 4)
-             left (validate-index start len)
-             right (validate-index end len)
-             br (BistReader. path)]
+     (let [f (io/file path)
+           len (quot (file-size f) 4)
+           left (validate-index start len)
+           right (validate-index end len)]
        (if (< left right)
-         [left right (.readWithRange br left right)]
-         [0 0 (int-array nil)])))))
+         (with-open [br (BistReader. path)]
+           [left right (.readWithRange br left right)])
+         [0 0 (int-array nil)]))))
 
 (defn bist-write
   [^String path ^"[I" values]
