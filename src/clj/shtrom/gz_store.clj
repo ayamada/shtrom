@@ -1,7 +1,7 @@
 (ns shtrom.gz-store
   (:require [clojure.java.io :as io])
   (:import [shtrom.util IOUtil]
-           [shtrom BistWriter]))
+           [shtrom BistWriter GzipStore]))
 
 ;;; bistファイルをgzip圧縮して扱うモジュール
 ;;; 以下のルールでgzip圧縮/展開を行う
@@ -32,7 +32,7 @@
   ;; NB: 「*.bist は存在するが *.bist.gz が存在しない」ケースにも
   ;;     対応する必要がある(gzファイルがない時は何もしなければok)
   (when (.exists (io/file (gz-path bist-path)))
-    (IOUtil/bistGunzip (gz-path bist-path) bist-path)))
+    (GzipStore/bistGunzip (gz-path bist-path) bist-path)))
 
 ;;; NB: このテーブルはmutexも兼ねている
 (defonce ^:private cache-table (atom {}))
