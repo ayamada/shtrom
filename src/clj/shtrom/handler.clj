@@ -10,8 +10,8 @@
             [shtrom.config :as config]
             [shtrom.cache :as cache]
             [shtrom.data :as data]
-            [shtrom.gz-store :as gz-store]
             [shtrom.error :as error])
+  (:import [shtrom GzipStore])
   (:gen-class))
 
 (defn- log-time-middleware [handler]
@@ -72,7 +72,7 @@
 
 (defn term
   []
-  (gz-store/delete-all-cache-entries!))
+  (GzipStore/deleteAll))
 
 (defn -main
   []
