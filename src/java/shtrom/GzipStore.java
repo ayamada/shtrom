@@ -15,12 +15,12 @@ import java.util.zip.GZIPOutputStream;
 import java.io.BufferedOutputStream;
 
 public class GzipStore {
-    // TODO: このgzip展開に、gzip圧縮時の三倍程度の時間がかかっている。
-    //       そんな時間はかからない(普通は圧縮時の方が時間がかかる)と思うので、
-    //       もっと効率を良くできないか、あとで調査する。
-    public static void bistGunzip (String gzPath, String resultPath) throws IOException {
-        GZIPInputStream gis = new GZIPInputStream(new FileInputStream(new File(gzPath)));
-        BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(new File(resultPath)));
+    // NB: このgunzip処理に、gzip圧縮時の三倍程度の時間がかかっている。
+    //     圧縮時よりも展開時の方が時間がかからなさそうに思えるのだが、
+    //     試行錯誤してみてもこれ以上良くならなかった。
+    public static void bistGunzip (String gzipPath, String gunzipPath) throws IOException {
+        GZIPInputStream gis = new GZIPInputStream(new FileInputStream(new File(gzipPath)));
+        BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(new File(gunzipPath)));
         byte[] buf = new byte[1024];
         try {
             while (true) {
