@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import shtrom.util.IOUtil;
+import shtrom.GzipStore;
 
 public class BistReader implements Closeable {
     private String path;
@@ -20,9 +21,6 @@ public class BistReader implements Closeable {
 
     public BistReader (String path) throws IOException {
         File file = new File(path);
-        if (! file.exists()) {
-            throw new IOException("File " + path + " not found");
-        }
         this.path = path;
         this.file = file;
     }
@@ -50,7 +48,15 @@ public class BistReader implements Closeable {
         return bb.getInt();
     }
 
+    private void prepareRead () throws IOException {
+        GzipStore.gunzipBist(path);
+        if (! file.exists()) {
+            throw new IOException("File " + path + " not found");
+        }
+    }
+
     public int[] read () throws IOException {
+        prepareRead();
         int len = (int)(file.length() / 4);
         int[] result = new int[len];
         DataInputStream rdr = new DataInputStream(new FileInputStream(file));
@@ -66,6 +72,7 @@ public class BistReader implements Closeable {
     }
 
     public int[] readWithRange (int left, int right) throws IOException {
+        prepareRead();
         if (right <= left) { return new int[0]; }
         int len = right - left;
         int[] result = new int[len];
@@ -80,5 +87,10 @@ public class BistReader implements Closeable {
             rdr.close();
         }
         return result;
+    }
+
+    public long length () throws IOException {
+        prepareRead();
+        return file.length() / 4;
     }
 }

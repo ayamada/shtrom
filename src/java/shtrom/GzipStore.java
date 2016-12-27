@@ -16,12 +16,11 @@ import java.util.zip.GZIPOutputStream;
 import java.util.Hashtable;
 import java.util.Collections;
 import java.io.BufferedOutputStream;
-import shtrom.BistWriter; // TODO: これが環状参照になると思う、あとでどうにかする事
 
 public class GzipStore {
     public static long ttlMsec = 1 * 60 * 60 * 1000;
     public static long ttlCheckThresholdMsec = 1000;
-    // TODO: このcacheTable回りはsynchronizedじゃ不完全で、一つのロックオブジェクトでロックする必要があるかも(ただしその場合は、deleteAll等からdeleteを呼ぶ部分に要注意)
+    // TODO: このcacheTable回りはsynchronizedじゃ不完全で、一つのロックオブジェクトでロックする必要があるかも
     private static Hashtable<String, Long> cacheTable = new Hashtable<String, Long>();
     public static long lastGcRunTimestamp = 0;
 
@@ -40,7 +39,10 @@ public class GzipStore {
         }
     }
 
-    synchronized public static void deleteAll () {
+    // NB: これはプロセス終了時に呼ばれるのでロックしてはならない
+    //     (ロックしてしまうとデッドロックする可能性がある。詳細は
+    //     java.lang.Runtime.addShutdownHook()の解説を参照)
+    public static void deleteAllForce () {
         for (String path : Collections.list(cacheTable.keys())) {
             delete(path);
         }
@@ -90,14 +92,6 @@ public class GzipStore {
             }
         }
         touch(path, true);
-        gc();
-    }
-
-    synchronized public static void gzipBist (String path, int[] values) throws IOException {
-        try (BistWriter bw = new BistWriter(gzPath(path))) {
-            bw.writeGzip(values);
-        }
-        delete(path);
         gc();
     }
 }

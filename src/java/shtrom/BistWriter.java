@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.util.zip.GZIPOutputStream;
 import java.util.ArrayList;
 import shtrom.util.IOUtil;
+import shtrom.GzipStore;
 
 public class BistWriter implements Closeable {
     private String path;
@@ -33,7 +34,7 @@ public class BistWriter implements Closeable {
     }
 
     public void writeGzip (int[] values) throws IOException {
-        File f = new File(path);
+        File f = new File(GzipStore.gzPath(path));
         FileOutputStream fos = new FileOutputStream(f);
         GZIPOutputStream gzos = new GZIPOutputStream(fos);
         try {
@@ -42,6 +43,8 @@ public class BistWriter implements Closeable {
         finally {
             gzos.close();
         }
+        GzipStore.delete(path);
+        GzipStore.gc();
     }
 
     public void write (int[] values) throws IOException {

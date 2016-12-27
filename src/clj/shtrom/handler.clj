@@ -72,7 +72,7 @@
 
 (defn term
   []
-  (GzipStore/deleteAll))
+  (GzipStore/deleteAllForce))
 
 (defn -main
   []
