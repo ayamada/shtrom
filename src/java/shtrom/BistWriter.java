@@ -24,27 +24,8 @@ public class BistWriter implements Closeable {
         this.path = path;
     }
 
-    private void writeToStream (OutputStream os, int[] values) throws IOException {
-        int len = values.length;
-        for (int i = 0; i < len; i++) {
-            ByteBuffer bb = IOUtil.genByteBuffer(8);
-            bb.putInt(values[i]);
-            os.write(bb.array(), 0, 4);
-        }
-    }
-
     public void writeGzip (int[] values) throws IOException {
-        File f = new File(GzipStore.gzPath(path));
-        FileOutputStream fos = new FileOutputStream(f);
-        GZIPOutputStream gzos = new GZIPOutputStream(fos);
-        try {
-            writeToStream(gzos, values);
-        }
-        finally {
-            gzos.close();
-        }
-        GzipStore.delete(path);
-        GzipStore.gc();
+        GzipStore.gzipBist(path, values);
     }
 
     public void write (int[] values) throws IOException {
@@ -52,7 +33,12 @@ public class BistWriter implements Closeable {
         FileOutputStream fos = new FileOutputStream(f);
         BufferedOutputStream bos = new BufferedOutputStream(fos);
         try {
-            writeToStream(bos, values);
+            int len = values.length;
+            for (int i = 0; i < len; i++) {
+                ByteBuffer bb = IOUtil.genByteBuffer(8);
+                bb.putInt(values[i]);
+                bos.write(bb.array(), 0, 4);
+            }
         }
         finally {
             bos.close();
