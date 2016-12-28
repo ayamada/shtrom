@@ -32,8 +32,6 @@ public class GzipStore {
         cacheTable.remove(path);
         File f = new File(path);
         File gzF = new File(gzPath(path));
-        // NB: gzFが存在せずにpathのみ存在している場合はpathを消してはならない
-        //     (backward compatibilityにて、この状態になる場合がある為)
         if (gzF.exists() && f.exists()) {
             f.delete();
         }
@@ -45,17 +43,12 @@ public class GzipStore {
         }
     }
 
-    // NB: これはプロセス終了時に呼ぶ用途なのでロックしてはならない
-    //     (ロックしてしまうとデッドロックする可能性がある。詳細は
-    //     java.lang.Runtime.addShutdownHook()の解説を参照)
     public static void deleteAllForce () {
         for (String path : Collections.list(cacheTable.keys())) {
             _delete(path);
         }
     }
 
-    // NB: ベンチマーク等の用途で、単にキャッシュを全て消したいだけの時は
-    //     こちらを使う
     public static void deleteAll () {
         synchronized (cacheTable) {
             deleteAllForce();
@@ -77,9 +70,6 @@ public class GzipStore {
         }
     }
 
-    // NB: このgunzip処理に、gzip圧縮時の三倍程度の時間がかかっている。
-    //     圧縮時よりも展開時の方が時間がかからなさそうに思えるのだが、
-    //     試行錯誤してみてもこれ以上良くならなかった。
     public static void gunzipBist (String path) throws IOException {
         synchronized (cacheTable) {
             String gzipPath = gzPath(path);
